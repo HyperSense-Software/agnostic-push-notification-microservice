@@ -1,17 +1,11 @@
-# Welcome to your CDK JavaScript project
+# Agnostic Push Notification Microservice
 
-This is a blank project for CDK development with JavaScript.
+Welcome to our newest open-source software project - an agnostic push notification microservice! This service is developed using AWS Cloud Development Kit (CDK) and JavaScript, offering a highly flexible and efficient solution for managing push notifications in mobile applications.
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app. The build step is not required when using JavaScript.
+This project is developed by [HyperSense Software](https://hypersense-software.com/) and it is distributed under an MIT License.
 
-## Useful commands
+Our agnostic push notification microservice leverages the power of AWS services to provide a seamless experience. At its core, the API Gateway exposes endpoints that enable mobile apps to register Firebase tokens. With the help of AWS Cognito, secure access is ensured through the authorization of incoming requests.
 
-* `npm run test`         perform the jest unit tests
-* `cdk deploy`           deploy this stack to your default AWS account/region
-* `cdk diff`             compare deployed stack with current state
-* `cdk synth`            emits the synthesized CloudFormation template
+This microservice is designed to handle various aspects of push notifications, including associating user IDs with their respective Firebase tokens, sending push notifications, maintaining read counts, managing notification lists, and offering other functionalities aimed at improving the push notification experience.
 
-## Setup
-This is intended to deploy on the **default AWS** on **eu-west-1**. To alter this behaviour edit bin/agnostic_push_notifications.ts
-This requires a secret named **AgnosticPushNotificationsSecret** exists and is configured on eu-west-1
-
+Another vital element of the microservice is an SQS queue that allows other microservices to send push notifications to users. By saving sent messages and maintaining logs using DynamoDB, the push notification microservice offers a reliable and efficient method for tracking notifications and ensuring smooth operation.
