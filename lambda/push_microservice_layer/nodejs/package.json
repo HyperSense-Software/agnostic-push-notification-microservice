@@ -1,0 +1,14 @@
+{
+  "name": "push-microservice-layer",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "firebase-admin": "^11.5.0",
+    "uuid": "^8.3.1"
+  }
+}
