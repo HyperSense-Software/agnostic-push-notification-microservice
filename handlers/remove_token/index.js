@@ -1,5 +1,5 @@
-const PushDevicesRepository = require('../../lambda/push_microservice_layer/models/push_devices.js');
-const ResponseWrapper = require('../../lambda/push_microservice_layer/response_wrapper.js');
+const PushDevicesRepository = require('../../opt/push_microservice_layer/models/push_devices.js');
+const ResponseWrapper = require('../../opt/push_microservice_layer/response_wrapper.js');
 
 exports.handler = async (event, context) => {
     console.log('Received event:', event.body);

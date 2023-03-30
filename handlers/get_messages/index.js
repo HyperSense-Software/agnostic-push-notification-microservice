@@ -1,5 +1,5 @@
-const PushNotificationRepository = require('../../lambda/push_microservice_layer/models/push_notifications.js');
-const ResponseWrapper = require('../../lambda/push_microservice_layer/response_wrapper.js');
+const PushNotificationRepository = require('../../opt/push_microservice_layer/models/push_notifications.js');
+const ResponseWrapper = require('../../opt/push_microservice_layer/response_wrapper.js');
 
 exports.handler = async (event, context) => {
     console.log('Received event:', event.body);

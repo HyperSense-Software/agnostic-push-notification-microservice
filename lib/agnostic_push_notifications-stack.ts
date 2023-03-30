@@ -165,6 +165,9 @@ export class AgnosticPushNotificationsStack extends Stack {
       code: lambda.Code.fromAsset(asset),
       handler: 'index.handler',
       layers: [this.lambdaLayer],
+      environment: {
+        'SECRET_NAME': secretName
+      },
       memorySize: memSize,
       timeout: Duration.seconds(timeout),
       description: description
@@ -194,6 +197,7 @@ export class AgnosticPushNotificationsStack extends Stack {
       layers: [this.lambdaLayer],
       environment: {
         'SERVER_RESPONSE_QUEUE_ID': outputQueue.queueUrl,
+        'SECRET_NAME': secretName
       },
       memorySize: memSize,
       timeout: Duration.seconds(timeout),

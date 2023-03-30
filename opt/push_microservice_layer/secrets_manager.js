@@ -1,5 +1,5 @@
 const AWS = require('aws-sdk');
-const secretName = "PushMicroserviceCredentials";
+const secretName = process.env.SECRET_NAME;
 const client = new AWS.SecretsManager({
     region: process.env.AWS_REGION
 });

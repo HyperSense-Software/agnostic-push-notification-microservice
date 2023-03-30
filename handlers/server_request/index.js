@@ -1,7 +1,7 @@
-const PushNotificationRepository = require('../../lambda/push_microservice_layer/models/push_notifications.js');
-const PushDevicesRepository = require('../../lambda/push_microservice_layer/models/push_devices.js');
-const PushNotificationsLogRepository = require('../../lambda/push_microservice_layer/models/push_notifications_log.js');
-const NotificationManager = require('../../lambda/push_microservice_layer/notification_manager.js');
+const PushNotificationRepository = require('../../opt/push_microservice_layer/models/push_notifications.js');
+const PushDevicesRepository = require('../../opt/push_microservice_layer/models/push_devices.js');
+const PushNotificationsLogRepository = require('../../opt/push_microservice_layer/models/push_notifications_log.js');
+const NotificationManager = require('../../opt/push_microservice_layer/notification_manager.js');
 
 const ResponseWrapper = require('../../lambda/push_microservice_layer/response_wrapper.js');
 
