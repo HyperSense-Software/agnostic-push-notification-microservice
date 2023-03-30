@@ -45,7 +45,7 @@ function itemToObject(item) {
     return object;
 }
 
-PushNotificationsLogRepository.tableName = "push_notifications_log";
+PushNotificationsLogRepository.tableName = "agnostic_push_notifications_log";
 PushNotificationsLogRepository.save = async function (data) {
     if (!data.firebaseId) data.firebaseId = "System-" + uuidv4();
     if (!data.createdAt) data.createdAt = String(new Date().getTime() / 1000);

@@ -9,7 +9,7 @@ const { v4: uuidv4 } = require('uuid');
 
 - #id - uuid  - searchable
 - createdAt - number unixtime
-- debtorNumber - number
+- userId - number
 - notificationPayload - Dictionary
 - status - new, delivered, read
 - type - default, silent
@@ -20,7 +20,7 @@ function objectToItem(object) {
 
     if (object.id) item.id = {S: object.id};
     if (object.createdAt) item.createdAt = {N: object.createdAt};
-    if (object.debtorNumber) item.debtorNumber = {S: object.debtorNumber};
+    if (object.userId) item.userId = {S: object.userId};
     if (object.status) item.status = {S: object.status};
     if (object.systemStatus) item.systemStatus = {S: object.systemStatus};
     if (object.details) item.details = {S: object.details};
@@ -36,7 +36,7 @@ function itemToObject(item) {
 
     if (item.id) object.id = item.id.S;
     if (item.createdAt) object.createdAt = item.createdAt.N;
-    if (item.debtorNumber) object.debtorNumber = item.debtorNumber.S;
+    if (item.userId) object.userId = item.userId.S;
     if (item.status) object.status = item.status.S;
     if (item.systemStatus) object.systemStatus = item.systemStatus.S;
     if (item.details) object.details = item.details.S;
@@ -50,11 +50,11 @@ function itemToObject(item) {
 
 var PushNotificationsRepository = {};
 
-PushNotificationsRepository.tableName = "push_notifications";
+PushNotificationsRepository.tableName = "agnostic_push_notifications";
 
 PushNotificationsRepository.SecondaryIndexes = {
-    DebtorNumberCreatedAt: "debtorNumber-createdAt-index",
-    DebtorNumberStatus: "debtorNumber-status-index"
+    userIdCreatedAt: "userId-createdAt-index",
+    userIdStatus: "userId-status-index"
 }
 PushNotificationsRepository.Status = {
     new: "new",
@@ -95,16 +95,16 @@ PushNotificationsRepository.get = async function (id) {
     return result.Item ? itemToObject(result.Item) : null;
 };
 
-PushNotificationsRepository.findByDebtorNumber = async function (debtorNumber, limit, minCreatedAt, maxCreatedAt, lastKey) {
+PushNotificationsRepository.findByUserId = async function (userId, limit, minCreatedAt, maxCreatedAt, lastKey) {
     if (!limit) limit = 100;
     var params = {
         ExpressionAttributeValues : {
-            ":vDebtorNumber": {
-                S: debtorNumber,
+            ":vuserId": {
+                S: userId,
             }
         },
-        IndexName : PushNotificationsRepository.SecondaryIndexes.DebtorNumberCreatedAt,
-        KeyConditionExpression : "debtorNumber = :vDebtorNumber",
+        IndexName : PushNotificationsRepository.SecondaryIndexes.userIdCreatedAt,
+        KeyConditionExpression : "userId = :vuserId",
         Limit: limit,
         Select: "ALL_ATTRIBUTES",
         ScanIndexForward: false,
@@ -144,11 +144,11 @@ PushNotificationsRepository.findByDebtorNumber = async function (debtorNumber, l
     return response;
 };
 
-PushNotificationsRepository.findUnreadMessageCounter = async function (debtorNumber) {
+PushNotificationsRepository.findUnreadMessageCounter = async function (userId) {
     var params = {
         ExpressionAttributeValues : {
-            ":vDebtorNumber": {
-                S: debtorNumber,
+            ":vuserId": {
+                S: userId,
             },
             ":vStatus" : {
                 S: PushNotificationsRepository.Status.new
@@ -157,8 +157,8 @@ PushNotificationsRepository.findUnreadMessageCounter = async function (debtorNum
         ExpressionAttributeNames : {
             "#read_status": "status"
         },
-        IndexName : PushNotificationsRepository.SecondaryIndexes.DebtorNumberStatus,
-        KeyConditionExpression : "debtorNumber = :vDebtorNumber AND #read_status = :vStatus",
+        IndexName : PushNotificationsRepository.SecondaryIndexes.userIdStatus,
+        KeyConditionExpression : "userId = :vuserId AND #read_status = :vStatus",
         Limit: 100,
         Select: "COUNT",
         ScanIndexForward: true,

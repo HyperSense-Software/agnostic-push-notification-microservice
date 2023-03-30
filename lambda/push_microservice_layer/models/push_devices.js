@@ -6,7 +6,7 @@ var dynamodb = new AWS.DynamoDB({
 
 /*
 - #deviceToken - string
-- debtorNumber - string - foreign key
+- userId - string - foreign key
 - platform - string - ios/android
  */
 
@@ -16,7 +16,7 @@ function objectToItem(object) {
     var item = {};
     if (object.createdAt) item.createdAt = {N: object.createdAt};
     if (object.deviceToken) item.deviceToken = {S: object.deviceToken};
-    if (object.debtorNumber) item.debtorNumber = {S: object.debtorNumber};
+    if (object.userId) item.userId = {S: object.userId};
     if (object.platform) item.platform = {S: object.platform};
     return item;
 }
@@ -25,15 +25,15 @@ function itemToObject(item) {
     var object = {};
     if (item.createdAt) object.createdAt = item.createdAt.N;
     if (item.deviceToken) object.deviceToken = item.deviceToken.S;
-    if (item.debtorNumber) object.debtorNumber = item.debtorNumber.S;
+    if (item.userId) object.userId = item.userId.S;
     if (item.platform) object.platform = item.platform.S;
     return object;
 }
 
-PushDevicesRepository.tableName = "push_devices";
+PushDevicesRepository.tableName = "agnostic_push_devices";
 
 PushDevicesRepository.SecondaryIndexes = {
-    DebtorNumber: "debtorNumber-index"
+    userId: "userId-index"
 }
 
 PushDevicesRepository.save = async function (data) {
@@ -73,8 +73,8 @@ PushDevicesRepository.remove = async function (id) {
 };
 
 
-PushDevicesRepository.removeDebtor = async function (debtorNumber) {
-    let items = (await PushDevicesRepository.findByDebtorNumber(debtorNumber)).items;
+PushDevicesRepository.removeByUserId = async function (userId) {
+    let items = (await PushDevicesRepository.findByuserId(userId)).items;
     if (!items.length) return;
     var params = {
         RequestItems : {}
@@ -92,15 +92,15 @@ PushDevicesRepository.removeDebtor = async function (debtorNumber) {
     await dynamodb.batchWriteItem(params).promise();
 };
 
-PushDevicesRepository.findByDebtorNumber = async function (debtorNumber) {
+PushDevicesRepository.findByuserId = async function (userId) {
     var params = {
         ExpressionAttributeValues : {
-            ":vDebtorNumber": {
-                S: debtorNumber,
+            ":vuserId": {
+                S: userId,
             }
         },
-        IndexName : PushDevicesRepository.SecondaryIndexes.DebtorNumber,
-        KeyConditionExpression : "debtorNumber = :vDebtorNumber",
+        IndexName : PushDevicesRepository.SecondaryIndexes.userId,
+        KeyConditionExpression : "userId = :vuserId",
         Limit: 100,
         Select: "ALL_ATTRIBUTES",
         ScanIndexForward: true,
