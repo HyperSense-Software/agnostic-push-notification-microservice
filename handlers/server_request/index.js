@@ -22,19 +22,19 @@ getMessage = async (parameters) =>
     }
 }
 
-removeDebtor = async (parameters) =>
+removeUser = async (parameters) =>
 {
-    let debtorNumber = parameters.debtorNumber;
-    if (!debtorNumber) {
+    let userId = parameters.userId;
+    if (!userId) {
         throw new ResponseWrapper.ResponseError(ResponseWrapper.ServerErrorMessages.invalid_parameters);
     }
-    await PushDevicesRepository.removeDebtor(debtorNumber);
+    await PushDevicesRepository.removeByUserId(userId);
 }
 
 sendMessage = async (notification) =>
 {
-    let debtorNumber = notification.debtorNumber;
-    if (!notification.debtorNumber)
+    let userId = notification.userId;
+    if (!notification.userId)
     {
         throw new ResponseWrapper.ResponseError(ResponseWrapper.ServerErrorMessages.invalid_parameters);
     }
@@ -47,13 +47,13 @@ sendMessage = async (notification) =>
     if (!notification.type) notification.type = NotificationManager.NotificationType.default;
 
     //NotificationManager
-    let badge = await PushNotificationRepository.findUnreadMessageCounter(debtorNumber)
+    let badge = await PushNotificationRepository.findUnreadMessageCounter(userId)
     var payloadiOS = NotificationManager.format("ios", notification.templateID, notification.templateParams, notification.additionalParams, badge);
     var payloadAndroid = NotificationManager.format("android", notification.templateID, notification.templateParams, notification.additionalParams, badge);
 
     var item = {
         type: notification.type,
-        debtorNumber: debtorNumber,
+        userId: userId,
         id : notification.id,
         notificationPayload: notification,
         texts : {
@@ -72,7 +72,7 @@ sendMessage = async (notification) =>
     {
         // send notifications
         item = await PushNotificationRepository.save(item);
-        let devices = (await PushDevicesRepository.findByDebtorNumber(debtorNumber)).items;
+        let devices = (await PushDevicesRepository.findByUserId(userId)).items;
         try
         {
             for (var index = 0; index < devices.length; index++)
@@ -175,9 +175,9 @@ exports.handler = async (event, context) => {
             await ResponseWrapper.sendServerResponse(response);
             return response;
         }
-        else if (requestType == "remove_debtor")
+        else if (requestType == "remove_user")
         {
-            await removeDebtor(requestParams);
+            await removeUser(requestParams);
             let response = ResponseWrapper.createServerResponse(requestID, undefined);
             await ResponseWrapper.sendServerResponse(response);
             return response;

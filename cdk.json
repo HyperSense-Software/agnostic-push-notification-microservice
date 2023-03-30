@@ -1,5 +1,5 @@
 {
-  "app": "node bin/agnostic_push_notifications.js",
+  "app": "npx ts-node --prefer-ts-exts bin/agnostic_push_notifications.ts",
   "watch": {
     "include": [
       "**"
@@ -7,7 +7,9 @@
     "exclude": [
       "README.md",
       "cdk*.json",
-      "jest.config.js",
+      "**/*.d.ts",
+      "**/*.js",
+      "tsconfig.json",
       "package*.json",
       "yarn.lock",
       "node_modules",
@@ -22,8 +24,6 @@
     "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": true,
     "@aws-cdk-containers/ecs-service-extensions:enableDefaultLogDriver": true,
     "@aws-cdk/aws-ec2:uniqueImdsv2TemplateName": true,
-    "@aws-cdk/core:checkSecretUsage": true,
-    "@aws-cdk/aws-iam:minimizePolicies": true,
     "@aws-cdk/core:target-partitions": [
       "aws",
       "aws-cn"

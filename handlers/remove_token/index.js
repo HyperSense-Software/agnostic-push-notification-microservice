@@ -8,8 +8,8 @@ exports.handler = async (event, context) => {
     if (!body) {
         return ResponseWrapper.createResponse("Missing parameters", 400);
     }
-    var debtorNumber = body.debtorNumber;
-    if (!debtorNumber) {
+    var userId = body.userId;
+    if (!userId) {
         return ResponseWrapper.createResponse("Missing parameters", 400);
     }
 

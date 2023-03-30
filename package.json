@@ -2,14 +2,14 @@
   "name": "agnostic_push_notifications",
   "version": "0.1.0",
   "bin": {
-    "lacent-tinka.pushmicroservice": "bin/agnostic_push_notifications.js"
+    "agnostic_push_notifications": "bin/agnostic_push_notifications.js"
   },
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
     "cdk": "cdk",
     "layer-install": "cd ./lambda/push_microservice_layer/nodejs && npm i",
-    "aws-deploy": "npm i ./lambda/push_microservice_layer/nodejs && cdk deploy"
+    "aws-deploy": "cdk deploy"
   },
   "devDependencies": {
     "@aws-cdk/assert": "^1.194.0",
@@ -24,7 +24,6 @@
     "aws-sdk": "^2.1138.0",
     "axios": "^0.27.2",
     "constructs": "^10.0.0",
-    "push-microservice-layer": "file:lambda/push_microservice_layer/nodejs",
     "source-map-support": "^0.5.16"
   }
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-const cdk = require('aws-cdk-lib');
-const { AgnosticPushNotificationsStack } = require('../lib/agnostic_push_notifications-stack');
+import { AgnosticPushNotificationsStack } from '../lib/agnostic_push_notifications-stack';
 import 'source-map-support/register';
+import * as cdk from 'aws-cdk-lib';
 
 const app = new cdk.App();
 new AgnosticPushNotificationsStack(app, 'AgnosticPushNotificationsStack', {

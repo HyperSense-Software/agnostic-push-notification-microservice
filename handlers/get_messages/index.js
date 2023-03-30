@@ -8,12 +8,12 @@ exports.handler = async (event, context) => {
     if (!body) {
         return ResponseWrapper.createResponse("Missing parameters", 400);
     }
-    var debtorNumber = body.debtorNumber;
-    if (!debtorNumber) {
+    var userId = body.userId;
+    if (!userId) {
         return ResponseWrapper.createResponse("Missing parameters", 400);
     }
 
-    let items = await PushNotificationRepository.findByDebtorNumber(debtorNumber,
+    let items = await PushNotificationRepository.findByUserId(userId,
         body.limit,
         body.minCreatedAt,
         body.maxCreatedAt,

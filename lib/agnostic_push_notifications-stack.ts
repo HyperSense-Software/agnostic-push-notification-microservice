@@ -9,9 +9,15 @@ import {
   aws_secretsmanager as secrets,
   aws_dynamodb as dynamodb,
   RemovalPolicy,
-  aws_sqs as sqs
+  aws_sqs as sqs, aws_cognito as cognito
 } from "aws-cdk-lib";
 import {SqsEventSource} from "aws-cdk-lib/aws-lambda-event-sources";
+
+//table settings
+const removalPolicy = RemovalPolicy.RETAIN
+
+//authorizer
+const userPoolId = "eu-west-1_frau01NE3"
 
 //lambda settings
 const memSize = 256;
@@ -25,11 +31,12 @@ const queueVisibilityTimeout = 120;
 //secret
 let secretName = "AgnosticPushNotificationsSecret";
 
-class AgnosticPushNotificationsStack extends Stack {
+export class AgnosticPushNotificationsStack extends Stack {
 
-  lambdaLayer = undefined;
-  clientEndpoint = undefined;
-  authorizer = undefined;
+  lambdaLayer: lambda.LayerVersion;
+
+  clientEndpoint: apigw.RestApi;
+  clientAuthorizer: apigw.Authorizer;
 
   /**
    *
@@ -37,7 +44,7 @@ class AgnosticPushNotificationsStack extends Stack {
    * @param {string} id
    * @param {StackProps=} props
    */
-  constructor(scope, id, props) {
+  constructor(scope: Construct, id: string, props: StackProps | undefined) {
     super(scope, id, props);
 
     const apiPolicy = new iam.PolicyDocument({
@@ -51,15 +58,19 @@ class AgnosticPushNotificationsStack extends Stack {
       ]
     });
 
-    this.lambdaLayer = new lambda.LayerVersion(this, 'PushMicroserviceLayer', {
-      code: lambda.Code.fromAsset('lambda/push_microservice_layer'),
-      layerVersionName: 'PushMicroserviceLayer',
+    this.lambdaLayer = new lambda.LayerVersion(this, 'AgnosticPushMicroserviceLayer', {
+      code: lambda.Code.fromAsset('opt'),
+      layerVersionName: 'AgnosticPushMicroserviceLayer',
       compatibleRuntimes: [lambda.Runtime.NODEJS_16_X]
     });
 
+    let userPool = cognito.UserPool.fromUserPoolId(this, 'UserPool', userPoolId);
+    this.clientAuthorizer = new apigw.CognitoUserPoolsAuthorizer(this, 'AgnosticPushNotificationsClientAuthorizer', {
+      cognitoUserPools: [userPool]
+    });
 
     //API Endpoint
-    this.clientEndpoint = new apigw.RestApi(this, 'PushNotificationsEndpoint', {
+    this.clientEndpoint = new apigw.RestApi(this, 'AgnosticPushNotificationsEndpoint', {
       restApiName: 'Push Notifications Endpoint for Client',
       policy: apiPolicy,
       endpointConfiguration: {
@@ -148,7 +159,7 @@ class AgnosticPushNotificationsStack extends Stack {
    * @param pathPart - path for the call "endpoint/prod/<pathPart>" will the API call
    * @param description - Description of the method
    */
-  createMethodHelper(id, asset, pathPart, description): lambda.Function {
+  createMethodHelper(id: string, asset: string, pathPart: string, description: string): lambda.Function {
     const lambdaFunction = new lambda.Function(this, id, {
       runtime: lambda.Runtime.NODEJS_16_X,
       code: lambda.Code.fromAsset(asset),
@@ -164,7 +175,7 @@ class AgnosticPushNotificationsStack extends Stack {
     resource.addMethod(
         'POST',
         endpointIntegration, {
-          authorizer: this.authorizer
+          authorizer: this.clientAuthorizer
         });
 
     return lambdaFunction;
@@ -207,13 +218,13 @@ class AgnosticPushNotificationsStack extends Stack {
   {
     let tables = [];
 
-    const pushDevicesTable = new dynamodb.Table(this, 'push_devices', {
+    const pushDevicesTable = new dynamodb.Table(this, 'agnostic_push_devices', {
       partitionKey: {
         name: 'deviceToken',
         type: dynamodb.AttributeType.STRING
       },
-      tableName: 'push_devices',
-      removalPolicy: RemovalPolicy.RETAIN,
+      tableName: 'agnostic_push_devices',
+      removalPolicy: removalPolicy,
     });
     pushDevicesTable.addGlobalSecondaryIndex({
       indexName: 'userId-index',
@@ -226,13 +237,13 @@ class AgnosticPushNotificationsStack extends Stack {
     this.addScalingToIndex(pushDevicesTable, 'userId-index');
     tables.push(pushDevicesTable);
 
-    const pushNotificationsTable = new dynamodb.Table(this, 'push_notifications', {
+    const pushNotificationsTable = new dynamodb.Table(this, 'agnostic_push_notifications', {
       partitionKey: {
         name: 'id',
         type: dynamodb.AttributeType.STRING
       },
-      tableName: 'push_notifications',
-      removalPolicy: RemovalPolicy.RETAIN,
+      tableName: 'agnostic_push_notifications',
+      removalPolicy: removalPolicy,
     });
     pushNotificationsTable.addGlobalSecondaryIndex({
       indexName: 'userId-createdAt-index',
@@ -261,13 +272,13 @@ class AgnosticPushNotificationsStack extends Stack {
     this.addScalingToIndex(pushNotificationsTable, 'userId-status-index');
     tables.push(pushNotificationsTable);
 
-    const pushNotificationsLogTable = new dynamodb.Table(this, 'push_notifications_log', {
+    const pushNotificationsLogTable = new dynamodb.Table(this, 'agnostic_push_notifications_log', {
       partitionKey: {
         name: 'firebaseId',
         type: dynamodb.AttributeType.STRING
       },
-      tableName: 'push_notifications_log',
-      removalPolicy: RemovalPolicy.RETAIN,
+      tableName: 'agnostic_push_notifications_log',
+      removalPolicy: removalPolicy,
     });
     this.addScalingToTable(pushNotificationsLogTable);
     tables.push(pushNotificationsLogTable);

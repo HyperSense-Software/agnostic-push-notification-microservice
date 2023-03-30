@@ -8,8 +8,8 @@ exports.handler = async (event, context) => {
     if (!body) {
         return ResponseWrapper.createResponse("Missing parameters", 400);
     }
-    var debtorNumber = body.debtorNumber;
-    if (!debtorNumber) {
+    var userId = body.userId;
+    if (!userId) {
         return ResponseWrapper.createResponse("Missing parameters", 400);
     }
 
@@ -24,7 +24,7 @@ exports.handler = async (event, context) => {
     }
 
     let existingItem = await PushDevicesRepository.get(deviceToken);
-    if (existingItem && (existingItem.debtorNumber == debtorNumber)){
+    if (existingItem && (existingItem.userId == userId)){
         return ResponseWrapper.createResponse(existingItem, 200);
     }
 
@@ -36,7 +36,7 @@ exports.handler = async (event, context) => {
         await PushDevicesRepository.remove(oldDeviceToken);
     }
 
-    let savedObject = await PushDevicesRepository.save({debtorNumber: debtorNumber, deviceToken: deviceToken, platform: platform});
+    let savedObject = await PushDevicesRepository.save({userId: userId, deviceToken: deviceToken, platform: platform});
 
     return ResponseWrapper.createResponse(savedObject, 200);
 }
