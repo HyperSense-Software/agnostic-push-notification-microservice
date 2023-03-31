@@ -8,10 +8,7 @@ exports.handler = async (event, context) => {
     if (!body) {
         return ResponseWrapper.createResponse("Missing parameters", 400);
     }
-    var userId = body.userId;
-    if (!userId) {
-        return ResponseWrapper.createResponse("Missing parameters", 400);
-    }
+    let userId = event.requestContext.authorizer.claims.sub;
 
     let items = await PushNotificationRepository.findByUserId(userId,
         body.limit,

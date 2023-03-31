@@ -72,12 +72,12 @@ NotificationManager.sendMessage = async function (token, pushMessage)
     return  {firebaseID : result.messageId, validToken: true};
 }
 
-NotificationManager.format = function (platform, templateID, templateParams, additionalParams, badge)
+NotificationManager.format = function (platform, templateId, templateParams, additionalParams, badge)
 {
-    var notification = {
+    let notification = {
         data : {
-            template : JSON.stringify(notificationTemplates[templateID]),
-            templateID: templateID
+            template : JSON.stringify(notificationTemplates[templateId]),
+            templateId: templateId
         },
         notification : {
             // title : "",
@@ -86,10 +86,10 @@ NotificationManager.format = function (platform, templateID, templateParams, add
         }
     }
 
-    let iOSTitle = notificationTemplates[templateID].iOS_title;
-    let iOSSubtitle = notificationTemplates[templateID].iOS_subtitle
-    let androidTitle = notificationTemplates[templateID].Android_title;
-    let androidSubtitle = notificationTemplates[templateID].Android_subtitle;
+    let iOSTitle = notificationTemplates[templateId].iOS_title;
+    let iOSSubtitle = notificationTemplates[templateId].iOS_subtitle
+    let androidTitle = notificationTemplates[templateId].Android_title;
+    let androidSubtitle = notificationTemplates[templateId].Android_subtitle;
 
     if (templateParams)
     {

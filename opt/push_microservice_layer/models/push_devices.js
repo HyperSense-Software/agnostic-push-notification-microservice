@@ -48,7 +48,7 @@ PushDevicesRepository.save = async function (data) {
 };
 
 PushDevicesRepository.get = async function (id) {
-    var params = {
+    let params = {
         Key: {
             deviceToken: {
                 S: id
@@ -56,7 +56,8 @@ PushDevicesRepository.get = async function (id) {
         },
         TableName: PushDevicesRepository.tableName
     };
-    var result = await dynamodb.getItem(params).promise();
+    let result = await dynamodb.getItem(params).promise();
+    console.log(`Q: ${params} R: ${result.Item}`);
     return result.Item ? itemToObject(result.Item) : null;
 };
 
@@ -74,7 +75,7 @@ PushDevicesRepository.remove = async function (id) {
 
 
 PushDevicesRepository.removeByUserId = async function (userId) {
-    let items = (await PushDevicesRepository.findByuserId(userId)).items;
+    let items = (await PushDevicesRepository.findByUserId(userId)).items;
     if (!items.length) return;
     var params = {
         RequestItems : {}
@@ -92,7 +93,7 @@ PushDevicesRepository.removeByUserId = async function (userId) {
     await dynamodb.batchWriteItem(params).promise();
 };
 
-PushDevicesRepository.findByuserId = async function (userId) {
+PushDevicesRepository.findByUserId = async function (userId) {
     var params = {
         ExpressionAttributeValues : {
             ":vuserId": {

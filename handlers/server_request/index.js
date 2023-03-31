@@ -2,8 +2,7 @@ const PushNotificationRepository = require('../../opt/push_microservice_layer/mo
 const PushDevicesRepository = require('../../opt/push_microservice_layer/models/push_devices.js');
 const PushNotificationsLogRepository = require('../../opt/push_microservice_layer/models/push_notifications_log.js');
 const NotificationManager = require('../../opt/push_microservice_layer/notification_manager.js');
-
-const ResponseWrapper = require('../../lambda/push_microservice_layer/response_wrapper.js');
+const ResponseWrapper = require('../../opt/push_microservice_layer/response_wrapper.js');
 
 getMessage = async (parameters) =>
 {
@@ -39,7 +38,7 @@ sendMessage = async (notification) =>
         throw new ResponseWrapper.ResponseError(ResponseWrapper.ServerErrorMessages.invalid_parameters);
     }
 
-    if (!notification.templateID)
+    if (!notification.templateId)
     {
         throw new ResponseWrapper.ResponseError(ResponseWrapper.ServerErrorMessages.invalid_parameters);
     }
@@ -48,8 +47,8 @@ sendMessage = async (notification) =>
 
     //NotificationManager
     let badge = await PushNotificationRepository.findUnreadMessageCounter(userId)
-    var payloadiOS = NotificationManager.format("ios", notification.templateID, notification.templateParams, notification.additionalParams, badge);
-    var payloadAndroid = NotificationManager.format("android", notification.templateID, notification.templateParams, notification.additionalParams, badge);
+    let payloadiOS = NotificationManager.format("ios", notification.templateId, notification.templateParams, notification.additionalParams, badge);
+    let payloadAndroid = NotificationManager.format("android", notification.templateId, notification.templateParams, notification.additionalParams, badge);
 
     var item = {
         type: notification.type,
@@ -144,14 +143,14 @@ exports.handler = async (event, context) => {
         console.log("send_requests", "Missing body");
         return;
     }
-    var requestID = body.requestID;
+    let requestID = body.requestID;
     if (!requestID) {
         console.log("send_requests", "Missing requestID");
         return;
     }
 
 
-    var requestType = body.requestType;
+    let requestType = body.requestType;
     if (!requestType) {
         console.log("send_requests", "Missing requestType");
         let response =  ResponseWrapper.createServerResponse(requestID, ResponseWrapper.ServerErrorMessages.invalid_parameters);
@@ -159,7 +158,7 @@ exports.handler = async (event, context) => {
         return response;
     }
 
-    var requestParams = body.requestParams;
+    let requestParams = body.requestParams;
     if (!requestParams) {
         console.log("send_requests", "Missing requestParams");
         let response =  ResponseWrapper.createServerResponse(requestID, ResponseWrapper.ServerErrorMessages.invalid_parameters);

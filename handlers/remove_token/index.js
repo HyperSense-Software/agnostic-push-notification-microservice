@@ -8,16 +8,18 @@ exports.handler = async (event, context) => {
     if (!body) {
         return ResponseWrapper.createResponse("Missing parameters", 400);
     }
-    var userId = body.userId;
-    if (!userId) {
-        return ResponseWrapper.createResponse("Missing parameters", 400);
-    }
-
-    var deviceToken = body.deviceToken;
+    let userId = event.requestContext.authorizer.claims.sub;
+    let deviceToken = body.deviceToken;
     if (!deviceToken) {
         return ResponseWrapper.createResponse("Missing parameters", 400);
     }
 
+    let device = await PushDevicesRepository.get(deviceToken);
+    if (!device || device.userId != userId)
+    {
+        console.log(`device.userId ${device.userId} userId ${userId}`);
+        return ResponseWrapper.createResponse("Invalid parameters", 400);
+    }
     await PushDevicesRepository.remove(deviceToken);
     return ResponseWrapper.createResponse(null, 200);
 }

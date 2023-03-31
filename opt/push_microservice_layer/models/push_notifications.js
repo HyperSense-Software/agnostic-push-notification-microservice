@@ -97,14 +97,14 @@ PushNotificationsRepository.get = async function (id) {
 
 PushNotificationsRepository.findByUserId = async function (userId, limit, minCreatedAt, maxCreatedAt, lastKey) {
     if (!limit) limit = 100;
-    var params = {
+    let params = {
         ExpressionAttributeValues : {
-            ":vuserId": {
+            ":vUserId": {
                 S: userId,
             }
         },
         IndexName : PushNotificationsRepository.SecondaryIndexes.userIdCreatedAt,
-        KeyConditionExpression : "userId = :vuserId",
+        KeyConditionExpression : "userId = :vUserId",
         Limit: limit,
         Select: "ALL_ATTRIBUTES",
         ScanIndexForward: false,
@@ -126,10 +126,10 @@ PushNotificationsRepository.findByUserId = async function (userId, limit, minCre
         params.KeyConditionExpression += " AND createdAt < :vMaxCreatedAt";
     }
 
-    var result = await dynamodb.query(params).promise();
+    let result = await dynamodb.query(params).promise();
 
     console.log(result);
-    var items = [];
+    let items = [];
     for (var index = 0; index < result.Items.length; index++)
     {
         items.push(itemToObject(result.Items[index]));

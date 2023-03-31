@@ -8,17 +8,14 @@ exports.handler = async (event, context) => {
     if (!body) {
         return ResponseWrapper.createResponse("Missing parameters", 400);
     }
-    var userId = body.userId;
-    if (!userId) {
-        return ResponseWrapper.createResponse("Missing parameters", 400);
-    }
+    let userId = event.requestContext.authorizer.claims.sub;
 
-    var deviceToken = body.deviceToken;
+    let deviceToken = body.deviceToken;
     if (!deviceToken) {
         return ResponseWrapper.createResponse("Missing parameters", 400);
     }
 
-    var platform = body.platform;
+    let platform = body.platform;
     if (!platform) {
         return ResponseWrapper.createResponse("Missing parameters", 400);
     }
@@ -28,7 +25,7 @@ exports.handler = async (event, context) => {
         return ResponseWrapper.createResponse(existingItem, 200);
     }
 
-    var oldDeviceToken = body.oldDeviceToken;
+    let oldDeviceToken = body.oldDeviceToken;
 
     if (oldDeviceToken)
     {
