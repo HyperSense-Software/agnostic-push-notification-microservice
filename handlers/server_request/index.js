@@ -6,11 +6,11 @@ const ResponseWrapper = require('../../opt/push_microservice_layer/response_wrap
 
 getMessage = async (parameters) =>
 {
-    let notificationID = parameters.notificationID;
+    let notificationId = parameters.notificationId;
 
-    if (!notificationID)
+    if (!notificationId)
         throw new ResponseWrapper.ResponseError(ResponseWrapper.ServerErrorMessages.invalid_parameters);
-    let item = await PushNotificationRepository.get(notificationID);
+    let item = await PushNotificationRepository.get(notificationId);
     if (item)
     {
         return item;
@@ -143,9 +143,9 @@ exports.handler = async (event, context) => {
         console.log("send_requests", "Missing body");
         return;
     }
-    let requestID = body.requestID;
-    if (!requestID) {
-        console.log("send_requests", "Missing requestID");
+    let requestId = body.requestId;
+    if (!requestId) {
+        console.log("send_requests", "Missing requestId");
         return;
     }
 
@@ -153,7 +153,7 @@ exports.handler = async (event, context) => {
     let requestType = body.requestType;
     if (!requestType) {
         console.log("send_requests", "Missing requestType");
-        let response =  ResponseWrapper.createServerResponse(requestID, ResponseWrapper.ServerErrorMessages.invalid_parameters);
+        let response =  ResponseWrapper.createServerResponse(requestId, ResponseWrapper.ServerErrorMessages.invalid_parameters);
         await ResponseWrapper.sendServerResponse(response);
         return response;
     }
@@ -161,7 +161,7 @@ exports.handler = async (event, context) => {
     let requestParams = body.requestParams;
     if (!requestParams) {
         console.log("send_requests", "Missing requestParams");
-        let response =  ResponseWrapper.createServerResponse(requestID, ResponseWrapper.ServerErrorMessages.invalid_parameters);
+        let response =  ResponseWrapper.createServerResponse(requestId, ResponseWrapper.ServerErrorMessages.invalid_parameters);
         await ResponseWrapper.sendServerResponse(response);
         return response;
     }
@@ -170,28 +170,28 @@ exports.handler = async (event, context) => {
         if (requestType == "get_message")
         {
             let item = await getMessage(requestParams);
-            let response = ResponseWrapper.createServerResponse(requestID, undefined, item);
+            let response = ResponseWrapper.createServerResponse(requestId, undefined, item);
             await ResponseWrapper.sendServerResponse(response);
             return response;
         }
         else if (requestType == "remove_user")
         {
             await removeUser(requestParams);
-            let response = ResponseWrapper.createServerResponse(requestID, undefined);
+            let response = ResponseWrapper.createServerResponse(requestId, undefined);
             await ResponseWrapper.sendServerResponse(response);
             return response;
         }
         else if (requestType == "send_message")
         {
             let notification = await sendMessage(requestParams);
-            let response = ResponseWrapper.createServerResponse(requestID, undefined, notification);
+            let response = ResponseWrapper.createServerResponse(requestId, undefined, notification);
             await ResponseWrapper.sendServerResponse(response);
             return response;
         }
         else
         {
             console.log("send_requests", "Invalid requestType " + requestType);
-            let response =  ResponseWrapper.createServerResponse(requestID, ResponseWrapper.ServerErrorMessages.invalid_parameters);
+            let response =  ResponseWrapper.createServerResponse(requestId, ResponseWrapper.ServerErrorMessages.invalid_parameters);
             await ResponseWrapper.sendServerResponse(response);
             return response;        }
     }
@@ -199,11 +199,11 @@ exports.handler = async (event, context) => {
         console.log(e);
         if (e instanceof ResponseWrapper.ResponseError)
         {
-            let response = ResponseWrapper.createServerResponse(requestID, e.message);
+            let response = ResponseWrapper.createServerResponse(requestId, e.message);
             await ResponseWrapper.sendServerResponse(response);
             return response;
         }
-        let response =  ResponseWrapper.createServerResponse(requestID, ResponseWrapper.ServerErrorMessages.invalid_parameters);
+        let response =  ResponseWrapper.createServerResponse(requestId, ResponseWrapper.ServerErrorMessages.invalid_parameters);
         await ResponseWrapper.sendServerResponse(response);
         return response;
     }

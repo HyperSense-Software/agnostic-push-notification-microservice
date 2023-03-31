@@ -31,10 +31,10 @@ class ResponseError extends Error {
 
 ResponseWrapper.ResponseError = ResponseError;
 
-ResponseWrapper.createServerResponse = function(requestID, errorMessage, data)
+ResponseWrapper.createServerResponse = function(requestId, errorMessage, data)
 {
     var response = {
-        requestID : requestID
+        requestId : requestId
     }
     if (errorMessage)
     {

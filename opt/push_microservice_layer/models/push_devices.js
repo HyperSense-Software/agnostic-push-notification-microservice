@@ -77,11 +77,11 @@ PushDevicesRepository.remove = async function (id) {
 PushDevicesRepository.removeByUserId = async function (userId) {
     let items = (await PushDevicesRepository.findByUserId(userId)).items;
     if (!items.length) return;
-    var params = {
+    let params = {
         RequestItems : {}
     };
-    var requests = [];
-    for (var index = 0; index < items.length; index++)
+    let requests = [];
+    for (let index = 0; index < items.length; index++)
     {
         requests.push({
             DeleteRequest : {
