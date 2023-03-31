@@ -59,8 +59,12 @@ The following will be created during deployment
 ### Authorizer pool 
     USER_POOL_ID=<enter your id>
 
-# Sample messages for queues
 
+#Samples
+<details>
+  <summary>Sample messages for queues</summary>
+
+# Messages for queues
 ## Sending a notification
 Templates are part of the code, check [Template](./opt/push_microservice_layer/resources/notificationTemplates.json)
 Input queue sample message:
@@ -131,3 +135,5 @@ Output queue sample message to get a notification
 ```json
 
 ```
+</details>
+
