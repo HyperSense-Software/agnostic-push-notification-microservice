@@ -19,10 +19,30 @@ Please find below a high-level diagram outlining the main components of this nod
 # Setup and deploy
 Some resources will need to be created, while others be provided
 
+## Firebase project
+You will need to create a firebase project and generate a private key for it.
+It will be similar to:
+```json
+{
+  "type": "service_account",
+  "project_id": "<project_id>",
+  "private_key_id": "<private_key_id>",
+  "private_key": "<private_key>",
+  "client_email": "<client_email>",
+  "client_id": "<client_id>",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "<client_x509_cert_url>"
+}
+
+```
+
 ## AWS resources
 ### Need to be provided
 The following must be created manually or by other systems
 - Secret Manager named **AgnosticPushNotificationsSecret**
+  - must contain the key FIREBASE_KEY with the value set as the json key above
 - User Pool
 
 ### Will be created during deploy
