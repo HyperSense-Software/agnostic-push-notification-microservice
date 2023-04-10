@@ -9,15 +9,29 @@ import {
   aws_secretsmanager as secrets,
   aws_dynamodb as dynamodb,
   RemovalPolicy,
-  aws_sqs as sqs, aws_cognito as cognito
+  aws_sqs as sqs,
+  aws_cognito as cognito,
+  aws_route53 as route53,
+  aws_certificatemanager as acm,
+  aws_route53_targets as r53targets
 } from "aws-cdk-lib";
 import {SqsEventSource} from "aws-cdk-lib/aws-lambda-event-sources";
+import * as os from "os";
+
+//Deployment helper
+const buildNumber = 1;
+
+// custom domain endpoint
+const hostedZoneId = process.env.HOSTED_ZONE_ID; //Should be Z*******;
+const zoneName = process.env.ZONE_NAME;
+const certificateArn = process.env.CERTIFICATE_ARN;// Should be  arn:aws:acm:<zone>:<account_id>:certificate/<id>";
+const apiDomain = process.env.API_DOMAIN;
 
 //table settings
-const removalPolicy = RemovalPolicy.RETAIN
+const removalPolicy = RemovalPolicy.RETAIN;
 
 //authorizer
-const userPoolId = "eu-west-1_frau01NE3"
+const userPoolId = process.env.USER_POOL_ID!;
 
 //lambda settings
 const memSize = 256;
@@ -47,17 +61,6 @@ export class AgnosticPushNotificationsStack extends Stack {
   constructor(scope: Construct, id: string, props: StackProps | undefined) {
     super(scope, id, props);
 
-    const apiPolicy = new iam.PolicyDocument({
-      statements: [
-        new iam.PolicyStatement({
-          actions: ["execute-api:Invoke"],
-          resources: ["*"],
-          principals: [new iam.AnyPrincipal()],
-          effect: iam.Effect.ALLOW
-        })
-      ]
-    });
-
     this.lambdaLayer = new lambda.LayerVersion(this, 'AgnosticPushMicroserviceLayer', {
       code: lambda.Code.fromAsset('opt'),
       layerVersionName: 'AgnosticPushMicroserviceLayer',
@@ -69,14 +72,7 @@ export class AgnosticPushNotificationsStack extends Stack {
       cognitoUserPools: [userPool]
     });
 
-    //API Endpoint
-    this.clientEndpoint = new apigw.RestApi(this, 'AgnosticPushNotificationsEndpoint', {
-      restApiName: 'Push Notifications Endpoint for Client',
-      policy: apiPolicy,
-      endpointConfiguration: {
-        types: [apigw.EndpointType.EDGE],
-      },
-    });
+    this.setupClientEndpoint();
 
     let dynamoDBTables = this.setupDynamoDBTables();
     let methods = this.setupClientMethods();
@@ -102,6 +98,66 @@ export class AgnosticPushNotificationsStack extends Stack {
       secretsManager.grantRead(methods[mIndex].role!);
     }
   }
+
+  //******************** Setup Client Endpoint ******************//
+  setupClientEndpoint(){
+    const apiPolicy = new iam.PolicyDocument({
+      statements: [
+        new iam.PolicyStatement({
+          actions: ["execute-api:Invoke"],
+          resources: ["*"],
+          principals: [new iam.AnyPrincipal()],
+          effect: iam.Effect.ALLOW
+        })
+      ]
+    });
+
+    this.clientEndpoint = new apigw.RestApi(this, 'AgnosticPushNotificationsEndpoint', {
+      restApiName: 'Push Notifications Endpoint for Client',
+      policy: apiPolicy,
+      endpointConfiguration: {
+        types: [apigw.EndpointType.REGIONAL],
+      },
+    });
+
+    this.clientEndpoint.addGatewayResponse("PathOrMethodMaybeFound",
+        {
+          type: apigw.ResponseType.MISSING_AUTHENTICATION_TOKEN,
+          templates: {
+            "application/json": `{"message": "$context.error.message", "hint": "Is the method/path combination correct? Check:${apiDomain ?? this.clientEndpoint.url}/status as well"}`
+          }
+        })
+
+    //Custom domain setup
+    if (hostedZoneId && zoneName && certificateArn && apiDomain)
+    {
+      const zone = route53.HostedZone.fromHostedZoneAttributes(this, 'ImportedHostedZone', {
+        hostedZoneId: hostedZoneId,
+        zoneName: zoneName,
+      });
+
+      const certificate = acm.Certificate.fromCertificateArn(this, "DomainCertificate", certificateArn)
+      this.clientEndpoint.addDomainName("AgnosticPushNotificationsAPI", {
+        domainName: apiDomain,
+        certificate: certificate,
+        securityPolicy: apigw.SecurityPolicy.TLS_1_2,
+        endpointType: apigw.EndpointType.REGIONAL
+      });
+
+      new route53.ARecord(this, 'AgnosticPushNotificationsAPI', {
+        zone,
+        recordName: apiDomain,
+        target: route53.RecordTarget.fromAlias(new r53targets.ApiGateway(this.clientEndpoint)),
+      });
+    }
+    else
+    {
+      console.warn("No setup for custom domain")
+    }
+
+
+  }
+
 
   //*********************** Endpoint Lambda Helpers ********************//
 
@@ -149,6 +205,9 @@ export class AgnosticPushNotificationsStack extends Stack {
         "Get the number of unread messages");
     clientMethods.push(method);
 
+    //this is not added to client methods because it doesn't need access to secrets or dynamo
+    this.createStatusMethodHelper()
+
     return clientMethods
   }
 
@@ -159,7 +218,7 @@ export class AgnosticPushNotificationsStack extends Stack {
    * @param pathPart - path for the call "endpoint/prod/<pathPart>" will the API call
    * @param description - Description of the method
    */
-  createMethodHelper(id: string, asset: string, pathPart: string, description: string): lambda.Function {
+  createMethodHelper(id: string, asset: string, pathPart: string, description: string, methodVerb: string = 'POST'): lambda.Function {
     const lambdaFunction = new lambda.Function(this, id, {
       runtime: lambda.Runtime.NODEJS_16_X,
       code: lambda.Code.fromAsset(asset),
@@ -176,13 +235,46 @@ export class AgnosticPushNotificationsStack extends Stack {
     const endpointIntegration = new apigw.LambdaIntegration(lambdaFunction, {});
     const resource = this.clientEndpoint.root.addResource(pathPart);
     resource.addMethod(
-        'POST',
+        methodVerb,
         endpointIntegration, {
           authorizer: this.clientAuthorizer
         });
 
     return lambdaFunction;
   }
+
+  /**
+   * Helper to create the status method
+   */
+  createStatusMethodHelper(): lambda.Function {
+    let deployMessage = JSON.stringify({
+      deployment_date: new Date(),
+      deployed_by: os.hostname(),
+      build: buildNumber,
+      details: "Added custom domain setup"
+    });
+    const lambdaFunction = new lambda.Function(this, 'Status', {
+      runtime: lambda.Runtime.NODEJS_16_X,
+      code: lambda.Code.fromAsset("handlers/microservice_status"),
+      handler: 'index.handler',
+      layers: [this.lambdaLayer],
+      environment: {
+        'DEPLOY_DETAIL' : deployMessage
+      },
+      memorySize: memSize,
+      timeout: Duration.seconds(timeout),
+      description: "Microservice status status"
+    });
+
+    const endpointIntegration = new apigw.LambdaIntegration(lambdaFunction, {});
+    const resource = this.clientEndpoint.root.addResource("status");
+    resource.addMethod(
+        'GET',
+        endpointIntegration);
+
+    return lambdaFunction;
+  }
+
 
   //*********************** Server Queue ********************//
   createServerRequestQueuesAndLambda(): lambda.Function {
@@ -216,6 +308,7 @@ export class AgnosticPushNotificationsStack extends Stack {
 
     return lambdaFunction;
   }
+
 
   //*********************** Dynamo Helpers ********************//
   setupDynamoDBTables() : dynamodb.Table[]
@@ -334,4 +427,6 @@ export class AgnosticPushNotificationsStack extends Stack {
       targetUtilizationPercent: 50
     });
   }
+
+
 }

@@ -59,6 +59,15 @@ The following will be created during deployment
 ### Authorizer pool 
     USER_POOL_ID=<enter your id>
 
+### Custom domain name setup
+If they are not set the deploy will generate a warning, but will not fail.
+Certificate must be on the same region as the gateway. If you have a different setup, please make sure to change the gateway to EDGE instead of REGIONAL.
+
+    HOSTED_ZONE_ID=<enter your zone id>
+    ZONE_NAME=<your zone name>
+    CERTIFICATE_ARN=<certificate arn>
+    API_DOMAIN=<api domain/subdomain>
+
 
 #Samples
 <details>
