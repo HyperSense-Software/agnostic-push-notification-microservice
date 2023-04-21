@@ -17,6 +17,9 @@ import {
 } from "aws-cdk-lib";
 import {SqsEventSource} from "aws-cdk-lib/aws-lambda-event-sources";
 import * as os from "os";
+import {CfnApiMapping, CfnDomainName} from "aws-cdk-lib/aws-apigatewayv2";
+import {HttpIntegrationProps} from "aws-cdk-lib/aws-apigateway/lib/integrations/http";
+import {MockIntegration} from "aws-cdk-lib/aws-apigateway/lib/integrations/mock";
 
 //Deployment helper
 const buildNumber = 1;
@@ -136,7 +139,19 @@ export class AgnosticPushNotificationsStack extends Stack {
         zoneName: zoneName,
       });
 
+
       const certificate = acm.Certificate.fromCertificateArn(this, "DomainCertificate", certificateArn)
+
+      // custom domain with multiple apis
+      // let domain = new apigw.DomainName(this, 'custom-domain', {
+      //   domainName: apiDomain,
+      //   certificate: certificate,
+      //   endpointType: apigw.EndpointType.REGIONAL,
+      //   securityPolicy: apigw.SecurityPolicy.TLS_1_2
+      // });
+      // domain.addBasePathMapping(this.clientEndpoint, { basePath: 'status' });
+
+
       this.clientEndpoint.addDomainName("AgnosticPushNotificationsAPI", {
         domainName: apiDomain,
         certificate: certificate,
@@ -149,6 +164,7 @@ export class AgnosticPushNotificationsStack extends Stack {
         recordName: apiDomain,
         target: route53.RecordTarget.fromAlias(new r53targets.ApiGateway(this.clientEndpoint)),
       });
+
     }
     else
     {
@@ -208,6 +224,9 @@ export class AgnosticPushNotificationsStack extends Stack {
     //this is not added to client methods because it doesn't need access to secrets or dynamo
     this.createStatusMethodHelper()
 
+    //add 404
+    this.create404Helper()
+
     return clientMethods
   }
 
@@ -251,7 +270,7 @@ export class AgnosticPushNotificationsStack extends Stack {
       deployment_date: new Date(),
       deployed_by: os.hostname(),
       build: buildNumber,
-      details: "Added custom domain setup"
+      details: "Added 404 for invalid URLs"
     });
     const lambdaFunction = new lambda.Function(this, 'Status', {
       runtime: lambda.Runtime.NODEJS_16_X,
@@ -273,6 +292,31 @@ export class AgnosticPushNotificationsStack extends Stack {
         endpointIntegration);
 
     return lambdaFunction;
+  }
+
+  /**
+   * Helper to respond with 404
+   */
+  create404Helper() {
+    const endpointIntegration = new apigw.MockIntegration({
+          requestTemplates: {
+            "application/json": `{"statusCode": 404}`
+          },
+          integrationResponses: [
+            {
+              statusCode: "404",
+              responseTemplates: {
+                "application/json": `"Method/Path combination not found. Please check the documentation."`
+              }
+            }
+          ]
+        })
+    this.clientEndpoint.root.addResource("{proxy+}").addMethod(
+        "ANY",
+        endpointIntegration,
+        {
+          methodResponses: [{ statusCode: "404" }]
+        });
   }
 
 

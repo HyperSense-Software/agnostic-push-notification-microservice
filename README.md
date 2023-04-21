@@ -79,7 +79,7 @@ Templates are part of the code, check [Template](./opt/push_microservice_layer/r
 Input queue sample message:
 ``` json
 {
-    "requestID":"sample",
+    "requestId":"sample",
     "requestType":"send_message",
     "requestParams" : {
         "userId" :"4368d4ff-e8f5-4788-8e66-30418eafa5af",
@@ -91,7 +91,7 @@ Input queue sample message:
 Output queue sample message
 ```json
 {
-  "requestID":"sample2",
+  "requestId":"sample2",
   "response":{
     "type":"default",
     "userId":"4368d4ff-e8f5-4788-8e66-30418eafa5af",
@@ -117,7 +117,7 @@ Output queue sample message
 Input queue sample message to get a notification, useful to check status
 ```json
 {
-  "requestID":"sample_get",
+  "requestId":"sample_get",
   "requestType":"get_message",
   "requestParams" : {
     "notificationId":"bafb3597-6679-4fff-8928-18a17fede183"
@@ -126,14 +126,14 @@ Input queue sample message to get a notification, useful to check status
 ```
 Output queue sample message to get a notification
 ```json
-{"requestID":"sample_get","response":{"id":"bafb3597-6679-4fff-8928-18a17fede183","createdAt":"1680267880.931","userId":"4368d4ff-e8f5-4788-8e66-30418eafa5af","status":"read","systemStatus":"new","notificationPayload":{"userId":"4368d4ff-e8f5-4788-8e66-30418eafa5af","templateId":"hello_world","templateParams":{"USER_NAME":"Mirela"},"type":"default"},"texts":{"ios":{"title":"Hello Mirela","body":"Glad to see an iOS fan"},"android":{"title":"Hello Mirela","body":"I like android better"}},"type":"default"}}
+{"requestId":"sample_get","response":{"id":"bafb3597-6679-4fff-8928-18a17fede183","createdAt":"1680267880.931","userId":"4368d4ff-e8f5-4788-8e66-30418eafa5af","status":"read","systemStatus":"new","notificationPayload":{"userId":"4368d4ff-e8f5-4788-8e66-30418eafa5af","templateId":"hello_world","templateParams":{"USER_NAME":"Mirela"},"type":"default"},"texts":{"ios":{"title":"Hello Mirela","body":"Glad to see an iOS fan"},"android":{"title":"Hello Mirela","body":"I like android better"}},"type":"default"}}
 ```
 
 ## Removing a user
 Input queue sample message to remove a user, will remove the devices for that user
 ```json
 {
-  "requestID":"sample_remove",
+  "requestId":"sample_remove",
   "requestType":"remove_user",
   "requestParams" : {
     "userId":"4368d4ff-e8f5-4788-8e66-30418eafa5af"
