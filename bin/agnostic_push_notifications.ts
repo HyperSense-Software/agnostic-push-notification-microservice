@@ -9,5 +9,10 @@ new AgnosticPushNotificationsStack(app, 'AgnosticPushNotificationsStack', {
         // change this if you have multiple AWS accounts on your system
         // account: <id of your account>,
         region: 'eu-west-1'
+    },
+    tags :{
+        environment: "learning",
+        category: "cdk_push_notification",
+        project: "AgnosticPushNotifications"
     }
 });

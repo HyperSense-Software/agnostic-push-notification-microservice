@@ -13,13 +13,12 @@ import {
   aws_cognito as cognito,
   aws_route53 as route53,
   aws_certificatemanager as acm,
-  aws_route53_targets as r53targets
+  aws_route53_targets as r53targets,
+  aws_logs as logs, Tags
 } from "aws-cdk-lib";
 import {SqsEventSource} from "aws-cdk-lib/aws-lambda-event-sources";
 import * as os from "os";
-import {CfnApiMapping, CfnDomainName} from "aws-cdk-lib/aws-apigatewayv2";
-import {HttpIntegrationProps} from "aws-cdk-lib/aws-apigateway/lib/integrations/http";
-import {MockIntegration} from "aws-cdk-lib/aws-apigateway/lib/integrations/mock";
+import {AccessLogFormat} from "aws-cdk-lib/aws-apigateway/lib/access-log";
 
 //Deployment helper
 const buildNumber = 1;
@@ -115,12 +114,48 @@ export class AgnosticPushNotificationsStack extends Stack {
       ]
     });
 
+    const clientLogGroup = new logs.LogGroup(
+        this,
+        'AgnosticPushNotificationsEndpointLogGroup'
+    );
+
+    //https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html#input-variable-reference
+    const accessLogFormat = apigw.AccessLogFormat.custom(JSON.stringify(
+        {
+          "stage" : "$context.stage",
+          "request_id" : "$context.requestId",
+          "api_id" : "$context.apiId",
+          "resource_path" : "$context.resourcePath",
+          "resource_id" : "$context.resourceId",
+          "http_method" : "$context.httpMethod",
+          "authorizer_status": "$context.authorizer.status",
+
+          "source_ip" : "$context.identity.sourceIp",
+          "user-agent" : "$context.identity.userAgent",
+          "user_id": "$context.authorizer.claims.sub",
+          "user_email": "$context.authorizer.claims.email",
+
+          "response_latency": "$context.responseLatency",
+          "authorizer_latency": "$context.authorizer.latency",
+          "integration_latency": "$context.integration.latency",
+          "waf_latency":"$context.waf.latency",
+          "authenticate_latency": "$context.authenticate.latency",
+        }
+    ));
+
     this.clientEndpoint = new apigw.RestApi(this, 'AgnosticPushNotificationsEndpoint', {
       restApiName: 'Push Notifications Endpoint for Client',
       policy: apiPolicy,
       endpointConfiguration: {
         types: [apigw.EndpointType.REGIONAL],
       },
+      deployOptions :{
+        accessLogDestination: new apigw.LogGroupLogDestination(clientLogGroup),
+        accessLogFormat: accessLogFormat,
+        tracingEnabled: false,
+        dataTraceEnabled: true,
+        metricsEnabled: true,
+      }
     });
 
     this.clientEndpoint.addGatewayResponse("PathOrMethodMaybeFound",
@@ -248,7 +283,8 @@ export class AgnosticPushNotificationsStack extends Stack {
       },
       memorySize: memSize,
       timeout: Duration.seconds(timeout),
-      description: description
+      description: description,
+      retryAttempts: 0
     });
 
     const endpointIntegration = new apigw.LambdaIntegration(lambdaFunction, {});
@@ -270,7 +306,7 @@ export class AgnosticPushNotificationsStack extends Stack {
       deployment_date: new Date(),
       deployed_by: os.hostname(),
       build: buildNumber,
-      details: "Added 404 for invalid URLs"
+      details: "Added log monitoring"
     });
     const lambdaFunction = new lambda.Function(this, 'Status', {
       runtime: lambda.Runtime.NODEJS_16_X,
