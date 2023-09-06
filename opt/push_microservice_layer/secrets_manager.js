@@ -1,6 +1,6 @@
-const AWS = require('aws-sdk');
+let {SecretsManagerClient, GetSecretValueCommand} = require("@aws-sdk/client-secrets-manager");
 const secretName = process.env.SECRET_NAME;
-const client = new AWS.SecretsManager({
+const client = new SecretsManagerClient({
     region: process.env.AWS_REGION
 });
 
@@ -17,7 +17,8 @@ SecretsManager.getSecrets = async function (key)
 {
     if (!allSecrets)
     {
-        let secrets = await client.getSecretValue({ SecretId: secretName }).promise();
+        let getSecretValueCommand = new GetSecretValueCommand({SecretId: secretName});
+        let secrets = await client.send(getSecretValueCommand);
         allSecrets = JSON.parse(secrets.SecretString);    
     }
 

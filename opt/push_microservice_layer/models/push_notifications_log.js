@@ -1,5 +1,11 @@
-var AWS = require('aws-sdk');
-var dynamodb = new AWS.DynamoDB({
+let {
+    DeleteItemCommand,
+    DynamoDBClient,
+    GetItemCommand,
+    PutItemCommand,
+} = require("@aws-sdk/client-dynamodb");
+
+const dynamodb = new DynamoDBClient({
     apiVersion: '2012-08-10',
     region: process.env.AWS_REGION
 });
@@ -15,7 +21,7 @@ details - string
  */
 
 
-var PushNotificationsLogRepository = {};
+let PushNotificationsLogRepository = {};
 PushNotificationsLogRepository.Status = {
     new: "new",
     tokenUpdate: "tokenUpdate",
@@ -23,7 +29,7 @@ PushNotificationsLogRepository.Status = {
     error: "error",
 }
 function objectToItem(object) {
-    var item = {};
+    let item = {};
     if (object.createdAt) item.createdAt = {N: object.createdAt};
     if (object.firebaseId) item.firebaseId = {S: object.firebaseId};
     if (object.notificationID) item.notificationID = {S: object.notificationID};
@@ -35,7 +41,7 @@ function objectToItem(object) {
 }
 
 function itemToObject(item) {
-    var object = {};
+    let object = {};
     if (item.createdAt) object.createdAt = item.createdAt.N;
     if (item.deviceToken) object.deviceToken = item.deviceToken.S;
     if (item.firebaseId) object.firebaseId = item.firebaseId.S;
@@ -49,17 +55,18 @@ PushNotificationsLogRepository.tableName = "agnostic_push_notifications_log";
 PushNotificationsLogRepository.save = async function (data) {
     if (!data.firebaseId) data.firebaseId = "System-" + uuidv4();
     if (!data.createdAt) data.createdAt = String(new Date().getTime() / 1000);
-    var params = {
+    let params = {
         Item: objectToItem(data),
         ReturnConsumedCapacity: "TOTAL",
         TableName: PushNotificationsLogRepository.tableName
     };
-    await dynamodb.putItem(params).promise();
+    let putItemCommand = new PutItemCommand(params);
+    await dynamodb.send(putItemCommand);
     return data;
 };
 
 PushNotificationsLogRepository.get = async function (id) {
-    var params = {
+    let params = {
         Key: {
             deviceToken: {
                 S: id
@@ -67,12 +74,13 @@ PushNotificationsLogRepository.get = async function (id) {
         },
         TableName: PushNotificationsLogRepository.tableName
     };
-    var result = await dynamodb.getItem(params).promise();
+    let getItemCommand = new GetItemCommand(params);
+    let result = await dynamodb.send(getItemCommand);
     return result.Item ? itemToObject(result.Item) : null;
 };
 
 PushNotificationsLogRepository.remove = async function (id) {
-    var params = {
+    let params = {
         Key: {
             firebaseId: {
                 S: id
@@ -80,7 +88,8 @@ PushNotificationsLogRepository.remove = async function (id) {
         },
         TableName: PushNotificationsLogRepository.tableName
     };
-    await dynamodb.deleteItem(params).promise();
+    let deleteItemCommand = new DeleteItemCommand(params);
+    await dynamodb.send(deleteItemCommand);
 };
 
 module.exports = PushNotificationsLogRepository;

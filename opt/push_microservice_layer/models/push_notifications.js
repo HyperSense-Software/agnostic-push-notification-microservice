@@ -1,5 +1,12 @@
-const AWS = require('aws-sdk');
-const dynamodb = new AWS.DynamoDB({
+let {
+    DeleteItemCommand,
+    DynamoDBClient,
+    GetItemCommand,
+    PutItemCommand,
+    QueryCommand
+} = require("@aws-sdk/client-dynamodb");
+
+const dynamodb = new DynamoDBClient({
     apiVersion: '2012-08-10',
     region: process.env.AWS_REGION
 });
@@ -16,7 +23,7 @@ const { v4: uuidv4 } = require('uuid');
  */
 
 function objectToItem(object) {
-    var item = {};
+    let item = {};
 
     if (object.id) item.id = {S: object.id};
     if (object.createdAt) item.createdAt = {N: object.createdAt};
@@ -32,7 +39,7 @@ function objectToItem(object) {
 }
 
 function itemToObject(item) {
-    var object = {};
+    let object = {};
 
     if (item.id) object.id = item.id.S;
     if (item.createdAt) object.createdAt = item.createdAt.N;
@@ -48,7 +55,7 @@ function itemToObject(item) {
 }
 
 
-var PushNotificationsRepository = {};
+let PushNotificationsRepository = {};
 
 PushNotificationsRepository.tableName = "agnostic_push_notifications";
 
@@ -73,17 +80,18 @@ PushNotificationsRepository.save = async function (data) {
     if (!data.status) data.status = PushNotificationsRepository.Status.new;
     if (!data.systemStatus) data.systemStatus = PushNotificationsRepository.SystemStatus.new;
 
-    var params = {
+    let params = {
         Item: objectToItem(data),
         ReturnConsumedCapacity: "TOTAL",
         TableName: PushNotificationsRepository.tableName
     };
-    await dynamodb.putItem(params).promise();
+    let putItemCommand = new PutItemCommand(params);
+    await dynamodb.send(putItemCommand);
     return data;
 };
 
 PushNotificationsRepository.get = async function (id) {
-    var params = {
+    let params = {
         Key: {
             id: {
                 S: id
@@ -91,7 +99,8 @@ PushNotificationsRepository.get = async function (id) {
         },
         TableName: PushNotificationsRepository.tableName
     };
-    var result = await dynamodb.getItem(params).promise();
+    let getItemCommand = new GetItemCommand(params);
+    let result = await dynamodb.send(getItemCommand);
     return result.Item ? itemToObject(result.Item) : null;
 };
 
@@ -126,15 +135,15 @@ PushNotificationsRepository.findByUserId = async function (userId, limit, minCre
         params.KeyConditionExpression += " AND createdAt < :vMaxCreatedAt";
     }
 
-    let result = await dynamodb.query(params).promise();
+    let queryCommand = new QueryCommand(params);
+    let result = await dynamodb.send(queryCommand);
 
-    console.log(result);
     let items = [];
-    for (var index = 0; index < result.Items.length; index++)
+    for (let index = 0; index < result.Items.length; index++)
     {
         items.push(itemToObject(result.Items[index]));
     }
-    var response = {
+    let response = {
         items: items
     }
     if (result.LastEvaluatedKey)
@@ -145,9 +154,9 @@ PushNotificationsRepository.findByUserId = async function (userId, limit, minCre
 };
 
 PushNotificationsRepository.findUnreadMessageCounter = async function (userId) {
-    var params = {
+    let params = {
         ExpressionAttributeValues : {
-            ":vuserId": {
+            ":vUserId": {
                 S: userId,
             },
             ":vStatus" : {
@@ -158,20 +167,21 @@ PushNotificationsRepository.findUnreadMessageCounter = async function (userId) {
             "#read_status": "status"
         },
         IndexName : PushNotificationsRepository.SecondaryIndexes.userIdStatus,
-        KeyConditionExpression : "userId = :vuserId AND #read_status = :vStatus",
+        KeyConditionExpression : "userId = :vUserId AND #read_status = :vStatus",
         Limit: 100,
         Select: "COUNT",
         ScanIndexForward: true,
         TableName: PushNotificationsRepository.tableName
     };
 
-    var result = await dynamodb.query(params).promise();
+    let queryCommand = new QueryCommand(params);
+    let result = await dynamodb.send(queryCommand);
     return result.Count;
 };
 
 
 PushNotificationsRepository.remove = async function (id) {
-    var params = {
+    let params = {
         Key: {
             id: {
                 S: id
@@ -179,7 +189,8 @@ PushNotificationsRepository.remove = async function (id) {
         },
         TableName: PushNotificationsRepository.tableName
     };
-    await dynamodb.deleteItem(params).promise();
+    let deleteItemCommand = new DeleteItemCommand(params);
+    await dynamodb.send(deleteItemCommand);
 };
 
 module.exports = PushNotificationsRepository;

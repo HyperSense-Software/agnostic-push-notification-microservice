@@ -66,7 +66,7 @@ export class AgnosticPushNotificationsStack extends Stack {
     this.lambdaLayer = new lambda.LayerVersion(this, 'AgnosticPushMicroserviceLayer', {
       code: lambda.Code.fromAsset('opt'),
       layerVersionName: 'AgnosticPushMicroserviceLayer',
-      compatibleRuntimes: [lambda.Runtime.NODEJS_16_X]
+      compatibleRuntimes: [lambda.Runtime.NODEJS_18_X]
     });
 
     let userPool = cognito.UserPool.fromUserPoolId(this, 'UserPool', userPoolId);
@@ -274,7 +274,7 @@ export class AgnosticPushNotificationsStack extends Stack {
    */
   createMethodHelper(id: string, asset: string, pathPart: string, description: string, methodVerb: string = 'POST'): lambda.Function {
     const lambdaFunction = new lambda.Function(this, id, {
-      runtime: lambda.Runtime.NODEJS_16_X,
+      runtime: lambda.Runtime.NODEJS_18_X,
       code: lambda.Code.fromAsset(asset),
       handler: 'index.handler',
       layers: [this.lambdaLayer],
@@ -309,7 +309,7 @@ export class AgnosticPushNotificationsStack extends Stack {
       details: "Added log monitoring"
     });
     const lambdaFunction = new lambda.Function(this, 'Status', {
-      runtime: lambda.Runtime.NODEJS_16_X,
+      runtime: lambda.Runtime.NODEJS_18_X,
       code: lambda.Code.fromAsset("handlers/microservice_status"),
       handler: 'index.handler',
       layers: [this.lambdaLayer],
@@ -363,7 +363,7 @@ export class AgnosticPushNotificationsStack extends Stack {
     });
 
     const lambdaFunction = new lambda.Function(this, 'ServerFunction', {
-      runtime: lambda.Runtime.NODEJS_16_X,
+      runtime: lambda.Runtime.NODEJS_18_X,
       code: lambda.Code.fromAsset('handlers/server_request'),
       handler: 'index.handler',
       layers: [this.lambdaLayer],

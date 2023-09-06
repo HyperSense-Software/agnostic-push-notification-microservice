@@ -1,10 +1,8 @@
-var admin = require("firebase-admin");
-var SecretManager = require("./secrets_manager.js");
-var notificationTemplates = require("./resources/notificationTemplates.json");
+const admin = require("firebase-admin");
+const SecretManager = require("./secrets_manager.js");
+const notificationTemplates = require("./resources/notificationTemplates.json");
 
-var notificationTTL = 24 * 3600;
-var NotificationManager = {
-};
+let NotificationManager = {};
 
 NotificationManager.firebaseAdmin = admin;
 
@@ -13,7 +11,7 @@ NotificationManager.NotificationType = {
     silent: "silent"
 };
 
-var initialisedAdmin = false;
+let initialisedAdmin = false;
 NotificationManager.initialiseAdmin = async function ()
 {
     if(initialisedAdmin) return;
@@ -22,7 +20,7 @@ NotificationManager.initialiseAdmin = async function ()
     if(initialisedAdmin) return;
     try {
         settings = JSON.parse(settings);
-        var credentials = {
+        let credentials = {
             projectId: settings.project_id,
             clientEmail: settings.client_email,
             privateKey: settings.private_key
@@ -43,10 +41,10 @@ NotificationManager.initialiseAdmin = async function ()
 NotificationManager.sendMessage = async function (token, pushMessage)
 {
     await NotificationManager.initialiseAdmin();
-    var response = await admin.messaging().sendToDevice(token, pushMessage)
-    var results = response.results;
+    let response = await admin.messaging().sendToDevice(token, pushMessage)
+    let results = response.results;
     if (!results.length) return  {validToken: false};
-    var result = results[0];
+    let result = results[0];
     if (result.error)
     {
         if ((result.error.code == "messaging/invalid-recipient") ||
@@ -95,10 +93,10 @@ NotificationManager.format = function (platform, templateId, templateParams, add
     {
         notification.data.templateParams = JSON.stringify(templateParams)
 
-        var keys = Object.keys(templateParams);
-        for (var index = 0; index < keys.length; index++)
+        let keys = Object.keys(templateParams);
+        for (let index = 0; index < keys.length; index++)
         {
-            var regex = RegExp("{" + keys[index] + "}", 'gmi');
+            let regex = RegExp("{" + keys[index] + "}", 'gmi');
             if (iOSTitle) iOSTitle = iOSTitle.replace(regex, templateParams[keys[index]]);
             if (iOSSubtitle) iOSSubtitle = iOSSubtitle.replace(regex, templateParams[keys[index]]);
             if (androidTitle) androidTitle = androidTitle.replace(regex, templateParams[keys[index]]);
@@ -120,7 +118,7 @@ NotificationManager.format = function (platform, templateId, templateParams, add
     if (additionalParams)
     {
         keys = Object.keys(additionalParams);
-        for (var index = 0; index < keys.length; index++)
+        for (let index = 0; index < keys.length; index++)
         {
             notification.data[keys[index]] = additionalParams[keys[index]];
         }

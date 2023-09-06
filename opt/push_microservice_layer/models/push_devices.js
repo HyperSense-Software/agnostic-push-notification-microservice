@@ -1,5 +1,13 @@
-var AWS = require('aws-sdk');
-var dynamodb = new AWS.DynamoDB({
+let {
+    BatchWriteItemCommand,
+    DeleteItemCommand,
+    DynamoDBClient,
+    GetItemCommand,
+    PutItemCommand,
+    QueryCommand
+} = require("@aws-sdk/client-dynamodb");
+
+const dynamodb = new DynamoDBClient({
     apiVersion: '2012-08-10',
     region: process.env.AWS_REGION
 });
@@ -10,10 +18,10 @@ var dynamodb = new AWS.DynamoDB({
 - platform - string - ios/android
  */
 
-var PushDevicesRepository = {};
+const PushDevicesRepository = {};
 
 function objectToItem(object) {
-    var item = {};
+    let item = {};
     if (object.createdAt) item.createdAt = {N: object.createdAt};
     if (object.deviceToken) item.deviceToken = {S: object.deviceToken};
     if (object.userId) item.userId = {S: object.userId};
@@ -22,7 +30,7 @@ function objectToItem(object) {
 }
 
 function itemToObject(item) {
-    var object = {};
+    let object = {};
     if (item.createdAt) object.createdAt = item.createdAt.N;
     if (item.deviceToken) object.deviceToken = item.deviceToken.S;
     if (item.userId) object.userId = item.userId.S;
@@ -38,12 +46,13 @@ PushDevicesRepository.SecondaryIndexes = {
 
 PushDevicesRepository.save = async function (data) {
     if (!data.createdAt) data.createdAt = String(new Date().getTime() / 1000);
-    var params = {
+    let params = {
         Item: objectToItem(data),
         ReturnConsumedCapacity: "TOTAL",
         TableName: PushDevicesRepository.tableName
     };
-    await dynamodb.putItem(params).promise();
+    let putItemCommand = new PutItemCommand(params);
+    await dynamodb.send(putItemCommand);
     return data;
 };
 
@@ -56,13 +65,13 @@ PushDevicesRepository.get = async function (id) {
         },
         TableName: PushDevicesRepository.tableName
     };
-    let result = await dynamodb.getItem(params).promise();
-    console.log(`Q: ${params} R: ${result.Item}`);
+    let getItemCommand = new GetItemCommand(params);
+    let result = await dynamodb.send(getItemCommand);
     return result.Item ? itemToObject(result.Item) : null;
 };
 
 PushDevicesRepository.remove = async function (id) {
-    var params = {
+    let params = {
         Key: {
             deviceToken: {
                 S: id
@@ -70,7 +79,8 @@ PushDevicesRepository.remove = async function (id) {
         },
         TableName: PushDevicesRepository.tableName
     };
-    await dynamodb.deleteItem(params).promise();
+    let deleteItemCommand = new DeleteItemCommand(params);
+    await dynamodb.send(deleteItemCommand);
 };
 
 
@@ -90,11 +100,12 @@ PushDevicesRepository.removeByUserId = async function (userId) {
         });
     }
     params.RequestItems[PushDevicesRepository.tableName] = requests;
-    await dynamodb.batchWriteItem(params).promise();
+    let batchWriteItemCommand = new BatchWriteItemCommand(params);
+    await dynamodb.send(batchWriteItemCommand);
 };
 
 PushDevicesRepository.findByUserId = async function (userId) {
-    var params = {
+    let params = {
         ExpressionAttributeValues : {
             ":vuserId": {
                 S: userId,
@@ -108,15 +119,15 @@ PushDevicesRepository.findByUserId = async function (userId) {
         TableName: PushDevicesRepository.tableName
     };
 
-    var result = await dynamodb.query(params).promise();
+    let queryCommand = new QueryCommand(params);
+    let result = await dynamodb.send(queryCommand);
 
-    console.log(result);
-    var items = [];
-    for (var index = 0; index < result.Items.length; index++)
+    let items = [];
+    for (let index = 0; index < result.Items.length; index++)
     {
         items.push(itemToObject(result.Items[index]));
     }
-    var response = {
+    let response = {
         items: items
     }
     if (result.LastEvaluatedKey)
