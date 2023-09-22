@@ -21,7 +21,7 @@ import * as os from "os";
 import {AccessLogFormat} from "aws-cdk-lib/aws-apigateway/lib/access-log";
 
 //Deployment helper
-const buildNumber = 1;
+const buildNumber = 2;
 
 // custom domain endpoint
 const hostedZoneId = process.env.HOSTED_ZONE_ID; //Should be Z*******;
@@ -306,7 +306,7 @@ export class AgnosticPushNotificationsStack extends Stack {
       deployment_date: new Date(),
       deployed_by: os.hostname(),
       build: buildNumber,
-      details: "Added log monitoring"
+      details: "Updated Firebase Messaging flow https://firebase.google.com/docs/reference/admin/node/firebase-admin.messaging.messaging.md#messagingsendtodevice"
     });
     const lambdaFunction = new lambda.Function(this, 'Status', {
       runtime: lambda.Runtime.NODEJS_18_X,

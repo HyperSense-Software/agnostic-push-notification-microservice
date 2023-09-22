@@ -31,43 +31,49 @@ NotificationManager.initialiseAdmin = async function ()
     }
     catch(e)
     {
-        console.log("NotificationManager.initialiseAdmin", e);
+        console.error("NotificationManager.initialiseAdmin", e);
     }
 
     initialisedAdmin = true;
 }
 
 
+//sendToDevice This API is now obsolete. https://firebase.google.com/docs/reference/admin/node/firebase-admin.messaging.messaging.md#messagingsendtodevice
 NotificationManager.sendMessage = async function (token, pushMessage)
 {
     await NotificationManager.initialiseAdmin();
-    let response = await admin.messaging().sendToDevice(token, pushMessage)
-    let results = response.results;
-    if (!results.length) return  {validToken: false};
-    let result = results[0];
-    if (result.error)
-    {
-        if ((result.error.code == "messaging/invalid-recipient") ||
-            (result.error.code == "messaging/registration-token-not-registered") ||
-            (result.error.code == "messaging/invalid-registration-token"))// remove token
-        {
-            return  {validToken: false, details: result.error.code};
-        }
-        else if ((result.error.code == "messaging/message-rate-exceeded")
-            || (result.error.code == "messaging/device-message-rate-exceeded")) // can retry
-        {
-            return  {validToken: true, details: result.error.code};
-        }
-
+    let message = Object.assign({}, pushMessage);
+    message.token = token;
+    try {
+        let response = await admin.messaging().send(message);
+        if (!response) return  {validToken: false};
+        // projects/{project_id}/messages/{message_id}
+        let responseParts = response.split("/");
+        let result = responseParts[responseParts.length - 1];
+        return  {firebaseID : result, validToken: true};
     }
-
-    if (result.canonicalRegistrationToken && result.canonicalRegistrationToken != token)
+    catch (error)
     {
-        //token has changed - update dynamo tokens
-        return  {firebaseID : result.messageId, validToken: true, token: result.canonicalRegistrationToken};
-    }
+        let errorInfo = error.errorInfo;
+        console.log("NotificationManager.sendMessage:errorInfo", errorInfo);
+        if (!errorInfo) return  {validToken: true, details: error.code ? error.code : error.message};
+        let errorCode = errorInfo.code;
+        if (!errorCode) return {validToken: true, details: errorInfo};
 
-    return  {firebaseID : result.messageId, validToken: true};
+        if ((errorCode == "messaging/invalid-recipient") ||
+            (errorCode == "messaging/registration-token-not-registered") ||
+            (errorCode == "messaging/invalid-registration-token") ||
+            (errorCode == "messaging/invalid-argument"))// remove token
+        {
+            return  {validToken: false, details: error.code};
+        }
+        else if ((errorCode == "messaging/message-rate-exceeded")
+            || (errorCode == "messaging/device-message-rate-exceeded")) // can retry
+        {
+            return  {validToken: true, details: error.code};
+        }
+        return  {validToken: false, details: errorCode};
+    }
 }
 
 NotificationManager.format = function (platform, templateId, templateParams, additionalParams, badge)
@@ -80,7 +86,6 @@ NotificationManager.format = function (platform, templateId, templateParams, add
         notification : {
             // title : "",
             // body : "",
-            badge : String(badge)
         }
     }
 
@@ -107,17 +112,35 @@ NotificationManager.format = function (platform, templateId, templateParams, add
     {
         if (iOSTitle) notification.notification.title = iOSTitle;
         if (iOSSubtitle) notification.notification.body = iOSSubtitle;
+        if (badge)
+        {
+            notification.apns = {
+                payload: {
+                    aps: {
+                        badge: badge,
+                    }
+                }
+            }
+        }
     }
     else
     {
         if (androidTitle) notification.notification.title = androidTitle;
         if (androidSubtitle) notification.notification.body = androidSubtitle;
-        notification.notification.clickAction = "FLUTTER_NOTIFICATION_CLICK";
+        notification.android = {
+            notification: {
+                clickAction: "FLUTTER_NOTIFICATION_CLICK"
+            }
+        }
+        if (badge)
+        {
+            notification.android.notification.notificationCount = badge;
+        }
     }
 
     if (additionalParams)
     {
-        keys = Object.keys(additionalParams);
+        let keys = Object.keys(additionalParams);
         for (let index = 0; index < keys.length; index++)
         {
             notification.data[keys[index]] = additionalParams[keys[index]];
