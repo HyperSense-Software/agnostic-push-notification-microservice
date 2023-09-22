@@ -55,22 +55,25 @@ NotificationManager.sendMessage = async function (token, pushMessage)
     catch (error)
     {
         let errorInfo = error.errorInfo;
-        console.log("NotificationManager.sendMessage:errorInfo", errorInfo);
         if (!errorInfo) return  {validToken: true, details: error.code ? error.code : error.message};
         let errorCode = errorInfo.code;
-        if (!errorCode) return {validToken: true, details: errorInfo};
+        if (!errorCode) {
+            console.log("NotificationManager.sendMessage:errorInfo", errorInfo);
+            return {validToken: true, details: errorInfo};
+        }
+        console.log("NotificationManager.sendMessage:errorInfo.errorCode", errorCode);
 
         if ((errorCode == "messaging/invalid-recipient") ||
             (errorCode == "messaging/registration-token-not-registered") ||
             (errorCode == "messaging/invalid-registration-token") ||
             (errorCode == "messaging/invalid-argument"))// remove token
         {
-            return  {validToken: false, details: error.code};
+            return  {validToken: false, details: errorCode};
         }
         else if ((errorCode == "messaging/message-rate-exceeded")
             || (errorCode == "messaging/device-message-rate-exceeded")) // can retry
         {
-            return  {validToken: true, details: error.code};
+            return  {validToken: true, details: errorCode};
         }
         return  {validToken: false, details: errorCode};
     }
