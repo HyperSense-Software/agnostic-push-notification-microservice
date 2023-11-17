@@ -14,11 +14,12 @@ import {
   aws_route53 as route53,
   aws_certificatemanager as acm,
   aws_route53_targets as r53targets,
-  aws_logs as logs, Tags
+  aws_logs as logs
 } from "aws-cdk-lib";
+import * as aws_events from "aws-cdk-lib/aws-events";
 import {SqsEventSource} from "aws-cdk-lib/aws-lambda-event-sources";
 import * as os from "os";
-import {AccessLogFormat} from "aws-cdk-lib/aws-apigateway/lib/access-log";
+import {addKeepAlive, KeepAliveStackParams} from 'lambda-keep-alive';
 
 //Deployment helper
 const buildNumber = 2;
@@ -274,6 +275,7 @@ export class AgnosticPushNotificationsStack extends Stack {
    */
   createMethodHelper(id: string, asset: string, pathPart: string, description: string, methodVerb: string = 'POST'): lambda.Function {
     const lambdaFunction = new lambda.Function(this, id, {
+      functionName: id,
       runtime: lambda.Runtime.NODEJS_18_X,
       code: lambda.Code.fromAsset(asset),
       handler: 'index.handler',
@@ -294,6 +296,9 @@ export class AgnosticPushNotificationsStack extends Stack {
         endpointIntegration, {
           authorizer: this.clientAuthorizer
         });
+
+    // let keepAliveParams = new KeepAliveStackParams(this, lambdaFunction, `KeepAliveRule-${id}`);
+    // addKeepAlive(keepAliveParams);
 
     return lambdaFunction;
   }
@@ -386,6 +391,18 @@ export class AgnosticPushNotificationsStack extends Stack {
     });
     lambdaFunction.addEventSource(eventSource);
 
+    let customRule = new aws_events.Rule(this, `KeepAliveRuleCustomRule`, {
+      schedule: aws_events.Schedule.cron({
+        minute: "0/5",
+        hour: "10-18",
+        month: "*",
+        weekDay: "MON-FRI",
+        year: "*"
+      })
+    })
+
+    let keepAliveParams = new KeepAliveStackParams(this, lambdaFunction, customRule);
+    addKeepAlive(keepAliveParams);
     return lambdaFunction;
   }
 

@@ -3,6 +3,10 @@ const ResponseWrapper = require('../../opt/push_microservice_layer/response_wrap
 
 exports.handler = async (event, context) => {
     console.log('Received event:', event.body);
+    if (event.type == "KeepAlive")
+    {
+        return "heartbeat";
+    }
     const body = JSON.parse(event.body);
 
     if (!body) {

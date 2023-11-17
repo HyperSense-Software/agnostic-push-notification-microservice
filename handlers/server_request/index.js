@@ -136,6 +136,11 @@ sendMessage = async (notification) =>
 
 exports.handler = async (event, context) => {
     console.log('Received event:', event);
+    if (event.type == "KeepAlive")
+    {
+        return "heartbeat";
+    }
+
     const request = event.Records[0];
     const body = JSON.parse(request.body);
 
