@@ -12,6 +12,8 @@ const dynamodb = new DynamoDBClient({
 });
 const { v4: uuidv4 } = require('uuid');
 
+const defaultMessageTTL = process.env.APN_MESSAGE_DEFAULT_TTL ? Number.parseInt(process.env.APN_MESSAGE_DEFAULT_TTL) : 0;
+
 /*
 
 - #id - uuid  - searchable
@@ -20,6 +22,7 @@ const { v4: uuidv4 } = require('uuid');
 - notificationPayload - Dictionary
 - status - new, delivered, read
 - type - default, silent
+- expiresAt - number
  */
 
 function objectToItem(object) {
@@ -34,6 +37,7 @@ function objectToItem(object) {
     if (object.notificationPayload) item.notificationPayload = {S: JSON.stringify(object.notificationPayload)};
     if (object.texts) item.texts = {S: JSON.stringify(object.texts)};
     if (object.type) item.type = {S: object.type};
+    if (object.expiresAt) item.expiresAt = {N: object.expiresAt};
 
     return item;
 }
@@ -50,6 +54,7 @@ function itemToObject(item) {
     if (item.notificationPayload) object.notificationPayload = JSON.parse(item.notificationPayload.S);
     if (item.texts) object.texts = JSON.parse(item.texts.S);
     if (item.type) object.type = item.type.S;
+    if (item.expiresAt) object.expiresAt = item.expiresAt.N;
 
     return object;
 }
@@ -79,6 +84,7 @@ PushNotificationsRepository.save = async function (data) {
     if (!data.createdAt) data.createdAt = String(new Date().getTime() / 1000);
     if (!data.status) data.status = PushNotificationsRepository.Status.new;
     if (!data.systemStatus) data.systemStatus = PushNotificationsRepository.SystemStatus.new;
+    if (!data.expiresAt && defaultMessageTTL) data.expiresAt = String(new Date().getTime() / 1000 + defaultMessageTTL);
 
     let params = {
         Item: objectToItem(data),

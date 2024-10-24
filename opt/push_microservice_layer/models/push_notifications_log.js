@@ -12,14 +12,16 @@ const dynamodb = new DynamoDBClient({
 
 const { v4: uuidv4 } = require('uuid');
 
+const defaultMessageLogTTL = process.env.APN_MESSAGE_LOG_DEFAULT_TTL ? Number.parseInt(process.env.APN_MESSAGE_LOG_DEFAULT_TTL) : 0;
+
 /*
 #firebaseId - string
 notificationID - string - foreign key
 deviceToken - string - foreign key
 status - new, delivered
 details - string
- */
-
+expiresAt - number
+*/
 
 let PushNotificationsLogRepository = {};
 PushNotificationsLogRepository.Status = {
@@ -36,6 +38,7 @@ function objectToItem(object) {
     if (object.deviceToken) item.deviceToken = {S: object.deviceToken};
     if (object.status) item.status = {S: object.status};
     if (object.details) item.details = {S: object.details};
+    if (object.expiresAt) item.expiresAt = {N: object.expiresAt};
 
     return item;
 }
@@ -48,6 +51,8 @@ function itemToObject(item) {
     if (item.deviceToken) object.deviceToken = item.deviceToken.S;
     if (item.status) object.status = item.status.S;
     if (item.details) object.status = item.details.S;
+    if (item.expiresAt) object.expiresAt = item.expiresAt.N;
+
     return object;
 }
 
@@ -55,6 +60,7 @@ PushNotificationsLogRepository.tableName = "agnostic_push_notifications_log";
 PushNotificationsLogRepository.save = async function (data) {
     if (!data.firebaseId) data.firebaseId = "System-" + uuidv4();
     if (!data.createdAt) data.createdAt = String(new Date().getTime() / 1000);
+    if (!data.expiresAt && defaultMessageLogTTL) data.expiresAt = String(new Date().getTime() / 1000 + defaultMessageLogTTL);
     let params = {
         Item: objectToItem(data),
         ReturnConsumedCapacity: "TOTAL",

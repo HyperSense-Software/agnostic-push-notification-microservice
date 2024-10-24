@@ -48,6 +48,10 @@ const queueVisibilityTimeout = 120;
 //secret
 let secretName = "AgnosticPushNotificationsSecret";
 
+// Setup TTL - set to 0 to disable
+const APN_MESSAGE_DEFAULT_TTL =  30 * 24 * 60 * 60; // 30 days - notifications are removed after 30 days
+const APN_MESSAGE_LOG_DEFAULT_TTL = 30 * 24 * 60 * 60; // 30 days - logs are set to be removed after 30 days
+
 export class AgnosticPushNotificationsStack extends Stack {
 
   lambdaLayer: lambda.LayerVersion;
@@ -281,7 +285,9 @@ export class AgnosticPushNotificationsStack extends Stack {
       handler: 'index.handler',
       layers: [this.lambdaLayer],
       environment: {
-        'SECRET_NAME': secretName
+        'SECRET_NAME': secretName,
+        'APN_MESSAGE_DEFAULT_TTL': APN_MESSAGE_DEFAULT_TTL.toString(),
+        'APN_MESSAGE_LOG_DEFAULT_TTL': APN_MESSAGE_LOG_DEFAULT_TTL.toString(),
       },
       memorySize: memSize,
       timeout: Duration.seconds(timeout),
@@ -311,7 +317,10 @@ export class AgnosticPushNotificationsStack extends Stack {
       deployment_date: new Date(),
       deployed_by: os.hostname(),
       build: buildNumber,
-      details: "Updated Firebase Messaging flow https://firebase.google.com/docs/reference/admin/node/firebase-admin.messaging.messaging.md#messagingsendtodevice"
+      details: "Updated NPM dependencies \n " +
+          "Added the ability to allow removal of old notifications and save costs, using TTL functionality \n" +
+          "Added expiredAt to the push notifications table  \n" +
+          "Added expiredAt to the push notifications log table default is 30 days"
     });
     const lambdaFunction = new lambda.Function(this, 'Status', {
       runtime: lambda.Runtime.NODEJS_18_X,
@@ -438,6 +447,7 @@ export class AgnosticPushNotificationsStack extends Stack {
       },
       tableName: 'agnostic_push_notifications',
       removalPolicy: removalPolicy,
+      timeToLiveAttribute: 'expiresAt'
     });
     pushNotificationsTable.addGlobalSecondaryIndex({
       indexName: 'userId-createdAt-index',
@@ -473,6 +483,7 @@ export class AgnosticPushNotificationsStack extends Stack {
       },
       tableName: 'agnostic_push_notifications_log',
       removalPolicy: removalPolicy,
+      timeToLiveAttribute: 'expiresAt'
     });
     this.addScalingToTable(pushNotificationsLogTable);
     tables.push(pushNotificationsLogTable);

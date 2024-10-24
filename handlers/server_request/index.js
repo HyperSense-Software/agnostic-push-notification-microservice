@@ -66,6 +66,7 @@ sendMessage = async (notification) =>
             }
         }
     }
+    if (notification.expiresAt) item.expiresAt = notification.expiresAt;
 
     if (notification.type == NotificationManager.NotificationType.default)
     {
