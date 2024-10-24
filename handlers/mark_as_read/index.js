@@ -2,6 +2,11 @@ const PushNotificationRepository = require('../../opt/push_microservice_layer/mo
 const ResponseWrapper = require('../../opt/push_microservice_layer/response_wrapper.js');
 
 exports.handler = async (event, context) => {
+
+    if (event.type == "KeepAlive")
+    {
+        return "heartbeat";
+    }
     const body = JSON.parse(event.body);
 
     if (!body) {

@@ -45,9 +45,9 @@ NotificationManager.sendMessage = async function (token, pushMessage)
     let message = Object.assign({}, pushMessage);
     message.token = token;
     try {
+        console.log("sending message",JSON.stringify(message));
         let response = await admin.messaging().send(message);
         if (!response) return  {validToken: false};
-        // projects/{project_id}/messages/{message_id}
         let responseParts = response.split("/");
         let result = responseParts[responseParts.length - 1];
         return  {firebaseID : result, validToken: true};
