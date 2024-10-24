@@ -9,21 +9,22 @@
     "watch": "tsc -w",
     "cdk": "cdk",
     "layer-install": "cd ./lambda/push_microservice_layer && npm i",
-    "aws-deploy": "cdk deploy"
+    "aws-deploy": "cdk deploy",
+    "cdk-destroy": "cdk destroy"
   },
   "devDependencies": {
     "@aws-cdk/assert": "^2.68.0",
     "@types/node": "10.17.27",
     "aws-cdk": "^2.94.0",
-    "ts-jest": "^26.2.0",
+    "ts-jest": "^29.2.5",
     "ts-node": "^8.1.0",
-    "typescript": "~3.9.7"
+    "typescript": "^5.6.3"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.405.0",
     "@aws-sdk/client-secrets-manager": "^3.405.0",
     "aws-cdk-lib": "^2.94.0",
-    "axios": "^0.27.2",
+    "axios": "^1.7.7",
     "constructs": "^10.0.0",
     "source-map-support": "^0.5.16"
   }

@@ -8,7 +8,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "firebase-admin": "^11.5.0",
+    "firebase-admin": "^12.6.0",
     "uuid": "^8.3.1"
   }
 }
