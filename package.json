@@ -10,7 +10,8 @@
     "watch": "tsc -w",
     "cdk": "cdk",
     "layer-install": "cd ./lambda/push_microservice_layer && npm i",
-    "aws-deploy": "cdk deploy"
+    "aws-deploy": "cdk deploy",
+    "cdk-destroy": "cdk destroy"
   },
   "devDependencies": {
     "@types/jest": "^29.5.8",
