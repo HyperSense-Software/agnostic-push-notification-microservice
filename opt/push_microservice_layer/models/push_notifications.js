@@ -91,6 +91,7 @@ PushNotificationsRepository.save = async function (data) {
         ReturnConsumedCapacity: "TOTAL",
         TableName: PushNotificationsRepository.tableName
     };
+
     let putItemCommand = new PutItemCommand(params);
     await dynamodb.send(putItemCommand);
     return data;

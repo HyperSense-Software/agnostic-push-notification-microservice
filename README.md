@@ -73,10 +73,15 @@ Certificate must be on the same region as the gateway. If you have a different s
 <details>
   <summary>Sample messages for queues</summary>
 
+### Stack variables
+Setup TTL for logs and messages, this will remove messages after TTL expires
+APN_MESSAGE_DEFAULT_TTL preset to 30 * 24 * 60 * 60
+sAPN_MESSAGE_LOG_DEFAULT_TTL preset to 86400
+
 # Messages for queues
 ## Sending a notification
 Templates are part of the code, check [Template](./opt/push_microservice_layer/resources/notificationTemplates.json)
-Input queue sample message:
+Param expiresAt is optional, if not sent default will be used.Input queue sample message:
 ``` json
 {
     "requestId":"sample",
@@ -84,10 +89,12 @@ Input queue sample message:
     "requestParams" : {
         "userId" :"4368d4ff-e8f5-4788-8e66-30418eafa5af",
         "templateId" : "hello_world",
+        "expiresAt" : "1680268046.989",
         "templateParams" : {"USER_NAME":"Jane"}
     }
 }
 ```
+
 Output queue sample message
 ```json
 {

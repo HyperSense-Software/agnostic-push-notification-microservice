@@ -21,8 +21,11 @@ import {SqsEventSource} from "aws-cdk-lib/aws-lambda-event-sources";
 import * as os from "os";
 import {addKeepAlive, KeepAliveStackParams} from 'lambda-keep-alive';
 
+//Enable keep alive for lambdas
+const enableKeepAlive = false;
+
 //Deployment helper
-const buildNumber = 2;
+const buildNumber = 3;
 
 // custom domain endpoint
 const hostedZoneId = process.env.HOSTED_ZONE_ID; //Should be Z*******;
@@ -303,8 +306,11 @@ export class AgnosticPushNotificationsStack extends Stack {
           authorizer: this.clientAuthorizer
         });
 
-    // let keepAliveParams = new KeepAliveStackParams(this, lambdaFunction, `KeepAliveRule-${id}`);
-    // addKeepAlive(keepAliveParams);
+    if (enableKeepAlive)
+    {
+      let keepAliveParams = new KeepAliveStackParams(this, lambdaFunction, `KeepAliveRule-${id}`);
+      addKeepAlive(keepAliveParams);
+    }
 
     return lambdaFunction;
   }
@@ -317,10 +323,10 @@ export class AgnosticPushNotificationsStack extends Stack {
       deployment_date: new Date(),
       deployed_by: os.hostname(),
       build: buildNumber,
-      details: "Updated NPM dependencies \n " +
-          "Added the ability to allow removal of old notifications and save costs, using TTL functionality \n" +
-          "Added expiredAt to the push notifications table  \n" +
-          "Added expiredAt to the push notifications log table default is 30 days"
+      details: "Updated NPM dependencies." +
+          "Added the ability to allow removal of old notifications and save costs, using TTL functionality." +
+          "Added expiresAt to the push notifications table.  " +
+          "Added expiresAt to the push notifications log table default is 30 days."
     });
     const lambdaFunction = new lambda.Function(this, 'Status', {
       runtime: lambda.Runtime.NODEJS_18_X,
@@ -383,7 +389,10 @@ export class AgnosticPushNotificationsStack extends Stack {
       layers: [this.lambdaLayer],
       environment: {
         'SERVER_RESPONSE_QUEUE_ID': outputQueue.queueUrl,
-        'SECRET_NAME': secretName
+        'SECRET_NAME': secretName,
+        'APN_MESSAGE_DEFAULT_TTL': APN_MESSAGE_DEFAULT_TTL.toString(),
+        'APN_MESSAGE_LOG_DEFAULT_TTL': APN_MESSAGE_LOG_DEFAULT_TTL.toString(),
+
       },
       memorySize: memSize,
       timeout: Duration.seconds(timeout),
@@ -410,8 +419,11 @@ export class AgnosticPushNotificationsStack extends Stack {
       })
     })
 
-    let keepAliveParams = new KeepAliveStackParams(this, lambdaFunction, customRule);
-    addKeepAlive(keepAliveParams);
+    if (enableKeepAlive)
+    {
+      let keepAliveParams = new KeepAliveStackParams(this, lambdaFunction, customRule);
+      addKeepAlive(keepAliveParams);
+    }
     return lambdaFunction;
   }
 
